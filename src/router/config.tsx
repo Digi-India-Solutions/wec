@@ -15,12 +15,12 @@ import ReportsPage from "../pages/reports/page";
 import SettingsPage from "../pages/settings/page";
 
 const routes: RouteObject[] = [
+  // {
+  //   path: "/home",
+  //   element: <Home />,
+  // },
   {
     path: "/",
-    element: <Home />,
-  },
-  {
-    path: "/login",
     element: <Login />,
   },
   {

@@ -10,11 +10,7 @@ export default function Login() {
   const { login } = useAuthStore();
   const navigate = useNavigate();
   const { showToast, ToastContainer } = useToast();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    role: 'admin'
-  });
+  const [formData, setFormData] = useState({ email: '', password: '', role: 'admin' });
   const [loading, setLoading] = useState(false);
 
   // Mock users for demo
@@ -34,7 +30,7 @@ export default function Login() {
 
       // Find user by email and role (password is ignored for demo)
       const user = mockUsers.find(u => u.email === formData.email && u.role === formData.role);
-      
+
       if (user) {
         login(user);
         showToast('Login successful!', 'success');
@@ -53,7 +49,7 @@ export default function Login() {
 
   const handleQuickLogin = async (userEmail: string, userRole: string) => {
     setLoading(true);
-    
+
     // Auto-fill form
     setFormData({
       email: userEmail,
@@ -63,7 +59,7 @@ export default function Login() {
 
     // Find and login user
     const user = mockUsers.find(u => u.email === userEmail && u.role === userRole);
-    
+
     if (user) {
       await new Promise(resolve => setTimeout(resolve, 500));
       login(user);
@@ -72,14 +68,14 @@ export default function Login() {
         navigate('/dashboard');
       }, 500);
     }
-    
+
     setLoading(false);
   };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <ToastContainer />
-      
+
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="mx-auto h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center">
@@ -161,16 +157,14 @@ export default function Login() {
                 className="w-full flex items-center justify-between p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <div className="flex items-center space-x-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                    user.role === 'admin' ? 'bg-red-100 text-red-600' :
-                    user.role === 'distributor' ? 'bg-blue-100 text-blue-600' :
-                    'bg-green-100 text-green-600'
-                  }`}>
-                    <i className={`${
-                      user.role === 'admin' ? 'ri-shield-user-line' :
-                      user.role === 'distributor' ? 'ri-building-line' :
-                      'ri-store-line'
-                    } w-4 h-4 flex items-center justify-center`}></i>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${user.role === 'admin' ? 'bg-red-100 text-red-600' :
+                      user.role === 'distributor' ? 'bg-blue-100 text-blue-600' :
+                        'bg-green-100 text-green-600'
+                    }`}>
+                    <i className={`${user.role === 'admin' ? 'ri-shield-user-line' :
+                        user.role === 'distributor' ? 'ri-building-line' :
+                          'ri-store-line'
+                      } w-4 h-4 flex items-center justify-center`}></i>
                   </div>
                   <div className="text-left">
                     <p className="text-sm font-medium text-gray-900">{user.name}</p>
