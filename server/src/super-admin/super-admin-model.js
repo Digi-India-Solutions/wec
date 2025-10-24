@@ -8,6 +8,23 @@ const superAdminSchema = new Schema({
         trim: true,
         default: "",
     },
+    createdByEmail: {
+        name: {
+            type: String,
+            trim: true,
+            default: "",
+        },
+        email: {
+            type: String,
+            trim: true,
+            default: "",
+        }
+    },
+    DistributorId: {
+        type: String,
+        trim: true,
+        default: "",
+    },
     email: {
         type: String,
         unique: true,
@@ -35,7 +52,7 @@ const superAdminSchema = new Schema({
     },
     role: {
         type: String,
-        default: "Super Admin",
+        default: "admin",
     },
     status: {
         type: String,
@@ -44,6 +61,26 @@ const superAdminSchema = new Schema({
     lastLogin: {
         type: String,
         default: 'Never',
+    },
+    address: {
+        type: String,
+        default: "",
+    },
+    dateOfJoining: {
+        type: String,
+        default: "",
+    },
+    totalRetailers: {
+        type: Number,
+        default: 0,
+    },
+    totalAMCs: {
+        type: Number,
+        default: 0,
+    },
+    walletBalance: {
+        type: Number,
+        default: 0,
     },
     createdAt: {
         type: Date,

@@ -15,55 +15,23 @@ app.use("/Public", express.static(path.join(__dirname + "/Public")));
 // app.set(express.static("./Public"));
 
 const superAdminRoutes = require("./src/super-admin/super-admin-routes");
-const adminRoleRoutes = require("./src/adminRole/adminRole-routes");
-const bannerRoutes = require("./src/banners/banners-routes");
-const productRoutes = require("./src/products/products-routes");
-const subProductRoutes = require("./src/subProducts/subProducts-routes");
-const categoryRoutes = require("./src/categorys/categorys.routes");
-const sizeRoutes = require("./src/sizes/sizes-routes");
-const colorRoutes = require("./src/colors/colors-routes");
-const wishListRoutes = require("./src/wishLists/wishList-routes");
-const usersRoutes = require("./src/users/users-routes");
-const couponRoutes = require("./src/coupons/coupons-routes")
-const rewardPointsRoutes = require("./src/rewordsPoints/rewordsPoints-routes")
-const videosUrlRoutes = require("./src/videosUrl/videosUrl-routes")
-const orderRoutes = require("./src/orders/orders-routes");
-const cardRoutes = require("./src/addToCard/card-routers")
-const faqRoutes = require("./src/faq/faq-routes")
-const reviewRoutes = require("./src/Reviews/review-routes")
-const enquiryRoutes = require("./src/enquiry/enquiry-routes");
-const mainCategoryRoutes = require("./src/mainCategorys/mainCategorys.routes");
-const notificationRoutes = require("./src/Notification/notification-routes");
-const salesAndReportsRoutes = require("./src/SalesAndReports/salesAndReports-routes");
-const challanRoutes = require("./src/challan/challan-routes");
-const returnRoutes = require("./src/return/return-routes");
-const cataloguesRoutes = require("./src/catalogues/catalogues-routes");
+const claimsRoutes = require("./src/claims/claims-routes");
+const categoryRoutes = require("./src/category/category-routes");
+const brandRoutes = require("./src/brand/brand-routes");
+const typeRoutes = require("./src/category/type/type-routes");
+const amcsRoutes = require("./src/amcs/amcs-routes");
+const transactionRoutes = require("./src/transaction/transaction-routes");
+// const usersRoutes = require("./src/users/users-routes");
 
 
 app.use("/api/admin", superAdminRoutes);
-app.use("/api/adminRole", adminRoleRoutes);
-app.use("/api/banner", bannerRoutes);
-app.use("/api/product", productRoutes);
-app.use("/api/subProduct", subProductRoutes);
+app.use("/api/claims", claimsRoutes);
 app.use("/api/category", categoryRoutes);
-app.use("/api/size", sizeRoutes);
-app.use("/api/color", colorRoutes);
-app.use("/api/wishlist", wishListRoutes);
-app.use("/api/user", usersRoutes);
-app.use("/api/coupon", couponRoutes)
-app.use("/api/reward", rewardPointsRoutes)
-app.use("/api/video", videosUrlRoutes)
-app.use("/api/order", orderRoutes);
-app.use("/api/card", cardRoutes)
-app.use("/api/faq", faqRoutes)
-app.use("/api/review", reviewRoutes)
-app.use("/api/enquiry", enquiryRoutes);
-app.use("/api/mainCategory", mainCategoryRoutes)
-app.use("/api/notification", notificationRoutes)
-app.use("/api/salesAndReports", salesAndReportsRoutes)
-app.use("/api/challan", challanRoutes)
-app.use("/api/return", returnRoutes)
-app.use("/api/catalogues", cataloguesRoutes)
+app.use("/api/brand", brandRoutes);
+app.use("/api/type",typeRoutes)
+app.use("/api/amcs", amcsRoutes);
+app.use("/api/transaction", transactionRoutes);
+// app.use("/api/user", usersRoutes);
 
 const connectDatabase = require("./db/database");
 
