@@ -112,7 +112,7 @@ exports.sendResetPasswordSuperAdmin = async (data) => {
         <div style="margin: 0 auto">
             <div class="container">
                 // <div class="logo">
-                //   <img src="https://api.sddipl.com/images/anibhavi-logo.png" style="width: 180px;">
+                //   <img src="https://api.zaikanuts.shop/images/anibhavi-logo.png" style="width: 180px;">
                 // </div>
                 <div class="title">Reset Password</div>
                 <hr style="opacity: 30%; margin-top: 3%; margin-bottom: 3%;" />
