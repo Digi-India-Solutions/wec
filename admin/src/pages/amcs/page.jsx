@@ -96,9 +96,10 @@ export default function AMCsPage() {
     { name: 'customerEmail', label: 'Customer Email', type: 'email', required: true },
     { name: 'customerMobile', label: 'Customer Mobile', type: 'tel', required: true },
     { name: 'customerAddress', label: 'Customer Address', type: 'textarea', required: true },
+    { name: 'productPicture', label: 'Upload Product Picture', type: 'file', required: false, accept: '.pdf,.jpg,.jpeg,.png' },
+    { name: 'purchaseProof', label: 'Upload Purchase Proof', type: 'file', required: false, accept: '.pdf,.jpg,.jpeg,.png' },
     { name: 'serialNumber', label: 'Serial / IMEI Number', type: 'text', required: true },
-    { name: 'purchaseProof', label: 'Upload Purchase Proof', type: 'file', required: false, accept: '.pdf,.jpg,.jpeg,.png' }
-  ];
+  ]; 
 
   const columns = [
     { key: 'id', title: 'AMC ID', sortable: true },
@@ -227,11 +228,15 @@ export default function AMCsPage() {
       formDataToSend.append("startDate", newAMC?.startDate || ""); formDataToSend.append("endDate", newAMC?.endDate || ""); formDataToSend.append("status", newAMC?.status || "active"); formDataToSend.append("retailerId", newAMC?.retailerId || "");
       formDataToSend.append("retailerName", newAMC?.retailerName || ""); formDataToSend.append("distributorId", newAMC?.distributorId || ""); formDataToSend.append("distributorName", newAMC?.distributorName || "");
       formDataToSend.append("createdDate", newAMC?.createdDate || ""); formDataToSend.append("renewalCount", newAMC?.renewalCount || 0); formDataToSend.append("lastServiceDate", newAMC?.lastServiceDate || "");
-      formDataToSend.append("categoryId", newAMC?.categoryId || ""); formDataToSend.append("brandId", newAMC?.brandId || ""); formDataToSend.append("typeId", newAMC?.typeId || "");formDataToSend.append("userId", user.id || "");
+      formDataToSend.append("categoryId", newAMC?.categoryId || ""); formDataToSend.append("brandId", newAMC?.brandId || ""); formDataToSend.append("typeId", newAMC?.typeId || ""); formDataToSend.append("userId", user.id || "");
       // ✅ Append purchase proof image only if provided
       if (newAMC?.purchaseProof) {
         formDataToSend.append("purchaseProof", newAMC.purchaseProof);
       }
+      if (newAMC?.productPicture) {
+        formDataToSend.append("productPicture", newAMC.productPicture);
+      }
+
       const endpoint = editingAMC ? `api/amcs/update-amc-by-admin/${editingAMC?._id}` : "api/amcs/create-amc-by-admin";
 
       // Send API request
@@ -242,7 +247,8 @@ export default function AMCsPage() {
         fetchAMCs()
         showToast('AMC created successfully', 'success');
         setIsModalOpen(false);
-        // setAmcs(prev => [newAMC, ...prev]);
+      } else {
+        showToast(response?.message || 'AMC creation failed', 'error');
       }
 
     } catch (error) {

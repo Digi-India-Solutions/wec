@@ -7,6 +7,7 @@ const {
   updateTransactionByAdmin,
   deleteTransactionByAdmin,
   getAllTransactions,
+  getWalletManagementByAdmin,
 } = require("./transaction-controller");
 
 // CRUD Routes
@@ -16,4 +17,5 @@ router.get("/get-all-transactions", getAllTransactions);
 router.post("/update-transaction-by-admin/:id", updateTransactionByAdmin);
 router.get("/delete-transaction-by-admin/:id", deleteTransactionByAdmin);
 
+router.get("/getWalletManagementByAdmin/:id", getWalletManagementByAdmin);
 module.exports = router;

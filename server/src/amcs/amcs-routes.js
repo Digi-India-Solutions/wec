@@ -11,7 +11,7 @@ const {
     deleteAmcByAdmin,
 } = require("./amcs-controller");
 
-router.post("/create-amc-by-admin", upload.single("purchaseProof"), createAmcByAdmin);
+router.post("/create-amc-by-admin", upload.fields([{ name: "productPicture", maxCount: 8 }, { name: "purchaseProof", maxCount: 1 }]), createAmcByAdmin);
 
 router.get("/get-amc-by-admin-with-pagination", getAmcByAdminWithPagination);
 

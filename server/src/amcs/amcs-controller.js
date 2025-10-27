@@ -81,7 +81,7 @@ exports.createAmcByAdmin = catchAsyncErrors(async (req, res, next) => {
         }
 
         if (user.walletBalance < amcAmount) {
-            return res.status(400).json({ status: false, massage: "Insufficient wallet balance please add amount" });
+            return res.status(200).json({ status: false, massage: "Insufficient wallet balance please add amount" });
         }
         // ✅ Prepare transaction object
         const newTransaction = {
@@ -92,7 +92,7 @@ exports.createAmcByAdmin = catchAsyncErrors(async (req, res, next) => {
             userEmail: user.email,
             type: "debit",
             amount: Number(amcAmount),
-            description: `Wallet Debit - ${amcPercentage}% of ₹${Number(purchaseValue).toLocaleString()} / (AMC Created)`,
+            description: `Wallet Debit - ${amcPercentage}% of ₹${Number(purchaseValue).toLocaleString()} / (AMC Created (ID:-${req?.body?.id || ""}))`,
             clientAmount: Number(purchaseValue),
             percentage: Number(amcPercentage),
             createdBy: `${user?.name || "System"}`,
@@ -142,14 +142,22 @@ exports.createAmcByAdmin = catchAsyncErrors(async (req, res, next) => {
                 req.body.createdByEmail = { name: "", email: "" };
             }
         }
-
+        console.log("req.FILES::===>", req.files);
         // ✅ Handle file upload (optional)
         let imageUrl = null;
-        if (req.file) {
-            const localImagePath = req.file.path;
+        let imageUrl2 = null;
+
+        if (req.files.purchaseProof) {
+            const localImagePath = req.files.purchaseProof[0].path;
             imageUrl = await uploadImage(localImagePath);
             deleteLocalFile(localImagePath);
             console.log("🖼️ Uploaded image path:", imageUrl);
+        }
+        if (req.files.productPicture) {
+            const localImagePath = req.files.productPicture[0].path;
+            imageUrl2 = await uploadImage(localImagePath);
+            deleteLocalFile(localImagePath);
+            console.log("🖼️ Uploaded image path:", imageUrl2);
         }
 
         // ✅ Convert and sanitize numeric fields
@@ -162,6 +170,7 @@ exports.createAmcByAdmin = catchAsyncErrors(async (req, res, next) => {
         const amc = await AMC.create({
             ...req.body,
             purchaseProof: imageUrl,
+            productPicture: imageUrl2,
             createdAt: new Date(),
         });
 

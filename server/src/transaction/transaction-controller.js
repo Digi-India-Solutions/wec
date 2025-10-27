@@ -55,24 +55,39 @@ exports.createTransactionByAdmin = catchAsyncErrors(async (req, res, next) => {
 // ✅ Get Transactions (with pagination, search, status)
 exports.getTransactionByAdminWithPagination = catchAsyncErrors(async (req, res, next) => {
     try {
-        let { page = 1, limit = 10, search = "", role = "", status = "", userType = "", createdByEmail = "" } = req.query;
+        let { page = 1, limit = 10, search = "", role = "", status = "", userType = "", userId = [], createdByEmail = "" } = req.query;
         page = Math.max(1, parseInt(page, 10));
         limit = Math.max(1, parseInt(limit, 10));
+        console.log('req.query::===>>', userId)
+
+        if (typeof userId === "string") {
+            try {
+                userId = JSON.parse(userId);
+            } catch {
+                userId = userId.split(",").filter(Boolean);
+            }
+        }
 
         const filter = {};
-        // if (role !== 'admin') {
-        //     filter.createdByEmail.createdBy = role;
+        const filterData = {};
+        if (role !== 'admin') {
 
-        //     // ✅ CreatedByEmail filter (distributor identifier)
+            if (Array.isArray(userId) && userId.length > 0) {
+                filter.userId = { $in: userId };
+                filterData.userId = { $in: userId };
+            }
+            //     filter.createdByEmail.createdBy = role;
 
-        //     if (createdByEmail && createdByEmail.trim() !== '') {
-        //         const createdByRegex = new RegExp(createdByEmail.trim(), 'i');
-        //         filter.$or = [
-        //             { 'createdByEmail.email': createdByRegex },
-        //             { 'createdByEmail.name': createdByRegex }
-        //         ];
-        //     }
-        // }
+            //     // ✅ CreatedByEmail filter (distributor identifier)
+
+            //     if (createdByEmail && createdByEmail.trim() !== '') {
+            //         const createdByRegex = new RegExp(createdByEmail.trim(), 'i');
+            //         filter.$or = [
+            //             { 'createdByEmail.email': createdByRegex },
+            //             { 'createdByEmail.name': createdByRegex }
+            //         ];
+            //     }
+        }
 
         if (status && status !== "all") {
             filter.status = new RegExp(`^${status}$`, "i");
@@ -91,7 +106,7 @@ exports.getTransactionByAdminWithPagination = catchAsyncErrors(async (req, res, 
         }
 
         const total = await Transaction.countDocuments(filter);
-        const totalTransactions = await Transaction.countDocuments();
+        const totalTransactions = await Transaction.countDocuments(filterData);
         const [creditAgg] = await Transaction.aggregate([
             { $match: { type: "credit" } },
             { $group: { _id: null, total: { $sum: "$amount" } } }
@@ -190,6 +205,38 @@ exports.deleteTransactionByAdmin = catchAsyncErrors(async (req, res, next) => {
             message: "Transaction deleted successfully",
             data: deleted,
         });
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+exports.getWalletManagementByAdmin = catchAsyncErrors(async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const user = await SuperAdmin.findById(id).lean();
+        if (!user) return next(new ErrorHandler("User not found", 404));
+        console.log("user:==>user:==>", user._id)
+
+        const transactions = await Transaction.find({ userId: user._id }).sort({ createdAt: -1 });
+        const totalCredit = transactions.reduce((total, transaction) => {
+            if (transaction.type === "credit") {
+                return total + transaction.amount;
+            }
+            return total;
+        }, 0);
+        const totalDebit = transactions.reduce((total, transaction) => {
+            if (transaction.type === "debit") {
+                return total + transaction.amount;
+            }
+            return total;
+        }, 0);
+
+        const totalBalance = user.walletBalance || 0;
+        res.status(200).json({
+            status: true,
+            message: "Wallet fetched successfully",
+            totalBalance, totalCredit, totalDebit,
+        })
     } catch (error) {
         return next(new ErrorHandler(error.message, 500));
     }

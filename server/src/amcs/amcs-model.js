@@ -10,7 +10,7 @@ const amcSchema = new Schema(
         customerMobile: { type: String, required: true },
         serialNumber: { type: String, required: true },
         purchaseProof: { type: String, default: null }, // uploaded image URL
-
+        productPicture: { type: String, default: null }, // uploaded image URL
         createdByEmail: {
             name: { type: String },
             email: { type: String },
