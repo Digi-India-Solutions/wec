@@ -1,6 +1,6 @@
 import axios from "axios";
-const serverURL = "http://localhost:8000";
-// const serverURL ="httpsapi.emipluscare.inhop";
+// const serverURL = "http://localhost:8000";
+const serverURL ="httpsapi.emipluscare.in";
 
 
 const postData = async (url, body) => {
