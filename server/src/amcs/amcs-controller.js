@@ -115,6 +115,10 @@ exports.createAmcByAdmin = catchAsyncErrors(async (req, res, next) => {
 
         // 3️⃣ Update Wallet Balance
         user.walletBalance = newWalletBalance;
+        if (user.totalAMCs >= 0) {
+            user.totalAMCs += 1;
+        }
+
         await user.save();
 
         // 4️⃣ Create Transaction Record

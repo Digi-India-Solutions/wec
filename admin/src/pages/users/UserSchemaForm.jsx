@@ -50,12 +50,14 @@ export default function SchemaForm({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    let data = {} ;
+    let data = {};
     if (activeTab === 'retailer') {
 
       const u = distributors.find((d) => d.name === formData.DistributorId);
       // console.log('JSON.stringify( u.email)==>', u.email ,u.name)
-      data = { ...formData, role: activeTab, createdByEmail: { name: u?.name, email: u?.email } }
+      user.role = 'admin' ? data = { ...formData, role: activeTab, createdByEmail: { name: u?.name, email: u?.email }, admin: { name: user?.name, email: user?.email } }
+        : data = { ...formData, role: activeTab, createdByEmail: { name: user?.name, email: user?.email } }
+
     } else {
       data = { ...formData, role: user?.role === 'distributor' ? 'retailer' : activeTab || '', DistributorId: user?.name, createdByEmail: { name: user?.name, email: user?.email } }
     }

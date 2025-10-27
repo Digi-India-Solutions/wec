@@ -115,7 +115,33 @@ exports.createAdminByAdmin = catchAsyncErrors(async (req, res, next) => {
         const { email, password } = req.body;
         // console.log('req.body::', req.body.userForm)
         const hash = await bcrypt.hash(password, 10);
+        if (req.body?.admin) {
+            const user = await SuperAdmin.findOne({ email: req.body.admin.email, name: req.body.admin.name });
+            console.log('req.body::', user)
 
+            if (user) {
+                if (req.body.role === 'distributor') {
+                    user.totalDistributors += 1;
+                }
+                else if (req.body.role === 'retailer') {
+                    user.totalRetailers += 1;
+                }
+                await user.save();
+            }
+        }
+
+        const user = await SuperAdmin.findOne({ email: req.body.createdByEmail.email, name: req.body.createdByEmail.name });
+        console.log('req.body::', user)
+
+        if (user) {
+            if (req.body.role === 'distributor') {
+                user.totalDistributors += 1;
+            }
+            else if (req.body.role === 'retailer') {
+                user.totalRetailers += 1;
+            }
+            await user.save();
+        }
         const currentSuperAdmin = await SuperAdmin.findOne({ email });
 
         if (currentSuperAdmin) {

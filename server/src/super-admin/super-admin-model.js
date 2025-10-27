@@ -74,6 +74,10 @@ const superAdminSchema = new Schema({
         type: Number,
         default: 0,
     },
+    totalDistributors: {
+        type: Number,
+        default: 0,
+    },
     totalAMCs: {
         type: Number,
         default: 0,

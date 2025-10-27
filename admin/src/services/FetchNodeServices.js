@@ -1,6 +1,6 @@
 import axios from "axios";
-const serverURL = "http://localhost:8000";
-// const serverURL ="https://api.zaikanuts.shop";
+// const serverURL = "http://localhost:8000";
+const serverURL ="https://api.zaikanuts.shop";
 
 
 const postData = async (url, body) => {
