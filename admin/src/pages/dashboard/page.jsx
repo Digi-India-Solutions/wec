@@ -1,5 +1,7 @@
 // import { useAuthStore } from '../../store/authStore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import { getData } from '../../services/FetchNodeServices';
+import { useState } from 'react';
 
 const mockStats = {
   admin: {
@@ -25,33 +27,26 @@ const mockStats = {
   }
 };
 
-const salesData = [
-  { month: 'Jan', sales: 45, revenue: 180000 },
-  { month: 'Feb', sales: 52, revenue: 208000 },
-  { month: 'Mar', sales: 48, revenue: 192000 },
-  { month: 'Apr', sales: 61, revenue: 244000 },
-  { month: 'May', sales: 55, revenue: 220000 },
-  { month: 'Jun', sales: 67, revenue: 268000 },
-];
-
-const productData = [
-  { name: 'AC', value: 35, color: '#3B82F6' },
-  { name: 'Refrigerator', value: 25, color: '#10B981' },
-  { name: 'Mobile', value: 20, color: '#F59E0B' },
-  { name: 'Laptop', value: 12, color: '#EF4444' },
-  { name: 'Others', value: 8, color: '#8B5CF6' },
-];
 
 export default function Dashboard() {
   // const { user } = useAuthStore();
-   const [isAuthenticated, setIsAuthenticated] = useState(
-      sessionStorage.getItem('isAuthenticated') === 'true'
-    );
-  
-    const [user, setUser] = useState(() => {
-      const storedUser = sessionStorage.getItem('user');
-      return storedUser ? JSON.parse(storedUser) : null;
-    });
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    sessionStorage.getItem('isAuthenticated') === 'true'
+  );
+
+  const [user, setUser] = useState(() => {
+    const storedUser = sessionStorage.getItem('user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+  const [amcs, setAmcs] = useState(0);
+  const [salesData, setSalesData] = useState([]);
+  const [productData, setProductData] = useState([]);
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [totaleActiveAcount, setTotaleActiveAcount] = useState(0);
+  const [totalExpiringThisMonth, setTotalExpiringThisMonth] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [totalDistributors, setTotalDistributors] = useState(0);
+  const [totalRetailers, setTotalRetailers] = useState(0);
 
   const stats = mockStats[user?.role || 'admin'];
 
@@ -74,6 +69,47 @@ export default function Dashboard() {
       </div>
     </div>
   );
+  ///////////////////////////////////////////////////////////////////////////////
+  const fetchAmc = async () => {
+    try {
+      if (!user?.id) return;
+
+      const queryJson = new URLSearchParams({
+        userId: user?.id?.toString() || "",
+        role: user?.role?.toString() || "",
+        createdByEmail: JSON.stringify({
+          email: user?.email?.toString() || "",
+          name: user?.name?.toString() || "",
+        }),
+      });
+
+      const response = await getData(`api/dashboard/get-all-amc-total?${queryJson}`);
+      console.log("response ===>", response);
+      setAmcs(response?.data.totalAmc || 0);
+      setTotaleActiveAcount(response?.data?.totalActiveAccount || 0);
+      setTotalExpiringThisMonth(response?.data?.totalExpiringThisMonth || 0);
+      setTotalDistributors(response?.data?.totalDistributors || 0);
+      setTotalRetailers(response?.data?.totalRetailers || 0);
+      setTotalRevenue(response?.data?.totalRevenue || 0);
+      setSalesData(response?.data?.amcSalesData || []);
+      setProductData(response?.data?.amcProductData || []);
+      setRecentActivities(response?.data?.amcRecentActivities || []);
+
+    } catch (error) {
+      console.error("Error fetching AMC:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAmc()
+  }, [])
+  ///////////////////////////////////////////////////////////////////////////////
+
+  const formatAmount = (amount) => {
+    if (amount >= 100000) return `${(amount / 100000).toFixed(2)}L`;
+    if (amount >= 1000) return `${(amount / 1000).toFixed(2)}k`;
+    return amount.toString();
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -91,27 +127,27 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total AMCs"
-          value={stats.totalAMCs.toLocaleString()}
+          value={amcs.toLocaleString()}
           icon="ri-file-shield-line"
           color="bg-blue-500"
           change="+12% from last month"
         />
         <StatCard
           title="Active Contracts"
-          value={stats.activeContracts.toLocaleString()}
+          value={totaleActiveAcount.toLocaleString()}
           icon="ri-checkbox-circle-line"
           color="bg-green-500"
           change="+8% from last month"
         />
         <StatCard
           title="Expiring This Month"
-          value={stats.expiringThisMonth}
+          value={totalExpiringThisMonth.toLocaleString()}
           icon="ri-alarm-warning-line"
           color="bg-yellow-500"
         />
         <StatCard
           title="Total Revenue"
-          value={`₹${(stats.totalRevenue / 100000).toFixed(1)}L`}
+          value={`₹${formatAmount(totalRevenue)}`}
           icon="ri-money-dollar-circle-line"
           color="bg-purple-500"
           change="+15% from last month"
@@ -122,13 +158,13 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <StatCard
             title="Total Distributors"
-            value={stats.totalDistributors || 0}
+            value={totalDistributors || 0}
             icon="ri-building-line"
             color="bg-indigo-500"
           />
           <StatCard
             title="Total Retailers"
-            value={stats.totalRetailers || 0}
+            value={totalRetailers || 0}
             icon="ri-store-line"
             color="bg-pink-500"
           />
@@ -139,16 +175,16 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <StatCard
             title="My Retailers"
-            value={stats.totalRetailers || 0}
+            value={totalRetailers || 0}
             icon="ri-store-line"
             color="bg-indigo-500"
           />
-          <StatCard
+          {/* <StatCard
             title="Commission Earned"
             value={`₹${(25000).toLocaleString()}`}
             icon="ri-hand-coin-line"
             color="bg-pink-500"
-          />
+          /> */}
         </div>
       )}
 
@@ -205,13 +241,13 @@ export default function Dashboard() {
               <Tooltip />
             </PieChart>
           </ResponsiveContainer>
-          
+
           <div className="space-y-4">
             {productData.map((item, index) => (
               <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
-                  <div 
-                    className="w-4 h-4 rounded-full" 
+                  <div
+                    className="w-4 h-4 rounded-full"
                     style={{ backgroundColor: item.color }}
                   ></div>
                   <span className="font-medium text-gray-900">{item.name}</span>
@@ -227,12 +263,7 @@ export default function Dashboard() {
       <div className="bg-white rounded-lg shadow p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
         <div className="space-y-4">
-          {[
-            { action: 'New AMC created for Samsung AC', user: 'Retailer John Doe', time: '2 hours ago', icon: 'ri-add-circle-line', color: 'text-green-600' },
-            { action: 'AMC renewal completed', user: 'Customer Jane Smith', time: '4 hours ago', icon: 'ri-refresh-line', color: 'text-blue-600' },
-            { action: 'Commission credited to wallet', user: 'Distributor ABC Corp', time: '6 hours ago', icon: 'ri-wallet-line', color: 'text-purple-600' },
-            { action: 'New retailer registered', user: 'Tech Solutions Ltd', time: '1 day ago', icon: 'ri-user-add-line', color: 'text-indigo-600' },
-          ].map((activity, index) => (
+          {recentActivities.map((activity, index) => (
             <div key={index} className="flex items-center space-x-4 p-3 hover:bg-gray-50 rounded-lg">
               <div className={`w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center`}>
                 <i className={`${activity.icon} ${activity.color} w-5 h-5 flex items-center justify-center`}></i>

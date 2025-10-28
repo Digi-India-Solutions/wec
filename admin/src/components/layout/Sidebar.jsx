@@ -28,7 +28,7 @@
 //         <h1 className="text-xl font-bold">AMC Management</h1>
 //         <p className="text-sm text-gray-400 capitalize">{user?.role} Panel</p>
 //       </div>
-      
+
 //       <nav className="flex-1 p-4">
 //         <ul className="space-y-2">
 //           {filteredMenuItems.map((item) => (
@@ -49,7 +49,7 @@
 //           ))}
 //         </ul>
 //       </nav>
-      
+
 //       <div className="p-4 border-t border-gray-700">
 //         <div className="flex items-center space-x-3 mb-4">
 //           <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
@@ -86,7 +86,7 @@ const menuItems = [
   { key: 'claims', label: 'Claims Management', icon: 'ri-file-shield-line', path: '/claims', roles: ['admin'] },
   { key: 'products', label: 'Products', icon: 'ri-product-hunt-line', path: '/products', roles: ['admin'] },
   { key: 'amcs', label: 'AMC Management', icon: 'ri-file-shield-line', path: '/amcs', roles: ['admin', 'distributor', 'retailer'] },
-  { key: 'customers', label: 'Customers', icon: 'ri-user-heart-line', path: '/customers', roles: ['admin', 'distributor', 'retailer'] },
+  { key: 'customers', label: 'Customers', icon: 'ri-user-heart-line', path: '/customers', roles: ['admin', 'distributor',] },
   { key: 'wallet', label: 'Wallet', icon: 'ri-wallet-line', path: '/wallet', roles: ['admin', 'distributor', 'retailer'] },
   { key: 'reports', label: 'Reports', icon: 'ri-bar-chart-line', path: '/reports', roles: ['admin', 'distributor'] },
   { key: 'settings', label: 'Settings', icon: 'ri-settings-line', path: '/settings', roles: ['admin'] },

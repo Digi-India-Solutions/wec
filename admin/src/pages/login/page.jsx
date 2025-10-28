@@ -111,7 +111,7 @@ export default function Login() {
         </form>
 
         {/* Quick Login Demo */}
-        <div className="mt-8">
+        {/* <div className="mt-8">
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-300"/>
@@ -148,7 +148,8 @@ export default function Login() {
           <p className="text-xs text-gray-400 mt-1">
             Password: demo123 (for manual login)
           </p>
-        </div>
+        </div> */}
+
       </div>
     </div>);
 }
