@@ -26,14 +26,18 @@ router.get("/delete-admin-user-by-admin/:id", deleteAdminUserByAdmin);
 router.get("/get-all-staff-by-admin", getAllStaffByAdmin)
 
 router.get("/get-admin-users-by-id/:id", getAdminUsersById)
+
+router.post("/send-reset-password-email", sendResetPasswordEmail);
+
+router.post("/reset-password", resetPassword);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 router.post("/create-admin", createSuperAdmin);
 
 
-router.post("/send-reset-password-email", sendResetPasswordEmail);
 
-router.post("/reset-password", resetPassword);
+
+
 
 
 // router.post("/update-super-admin/:id", updateSuperAdminByID);

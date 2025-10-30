@@ -8,64 +8,11 @@ const mongoose = require("mongoose");
 const SuperAdmin = require("../super-admin/super-admin-model");
 const { createTransactionByAdmin } = require("../transaction/transaction-controller");
 const transactionModel = require("../transaction/transaction-model");
-
-// ✅ Create AMC
-// exports.createAmcByAdmin = catchAsyncErrors(async (req, res, next) => {
-//     try {
-//         console.log("req.body::===>", req.body);
-
-//         // ✅ Safely handle empty ObjectId fields
-//         const objectIdFields = ["retailerId", "distributorId", "categoryId", "brandId", "typeId"];
-//         objectIdFields.forEach((field) => {
-//             if (!req.body[field] || req.body[field].trim() === "") {
-//                 req.body[field] = null;
-//             }
-//         });
-
-//         // ✅ Safely parse createdByEmail if sent as string
-//         if (req.body.createdByEmail && typeof req.body.createdByEmail === "string") {
-//             try {
-//                 req.body.createdByEmail = JSON.parse(req.body.createdByEmail);
-//             } catch (err) {
-//                 req.body.createdByEmail = { name: "", email: "" };
-//             }
-//         }
-
-//         // ✅ Handle image upload
-//         let imageUrl = null;
-//         if (req.file) {
-//             const localImagePath = req.file.path;
-//             imageUrl = await uploadImage(localImagePath);
-//             deleteLocalFile(localImagePath);
-//             console.log("fileURL----------", localImagePath);
-//         }
-
-//         // ✅ Convert numeric fields safely
-//         req.body.purchaseValue = Number(req.body.purchaseValue) || 0;
-//         req.body.amcPercentage = Number(req.body.amcPercentage) || 0;
-//         req.body.amcAmount = Number(req.body.amcAmount) || 0;
-//         req.body.renewalCount = Number(req.body.renewalCount) || 0;
-
-//         // ✅ Create AMC safely
-//         const amc = await AMC.create({
-//             ...req.body,
-//             purchaseProof: imageUrl,
-//         });
-
-//         res.status(200).json({
-//             status: true,
-//             message: "AMC created successfully",
-//             data: amc,
-//         });
-//     } catch (error) {
-//         console.error("❌ Error creating AMC:", error);
-//         return next(new ErrorHandler(error.message, 500));
-//     }
-// });
+const Customers = require("../customer/customer-model");
 
 exports.createAmcByAdmin = catchAsyncErrors(async (req, res, next) => {
     try {
-        console.log("📩 Incoming AMC Create Request:", req.body);
+        console.log("Incoming AMC Create Request:=>", req.body);
 
         const { userId, purchaseValue, amcPercentage, amcAmount } = req.body;
 
@@ -183,12 +130,28 @@ exports.createAmcByAdmin = catchAsyncErrors(async (req, res, next) => {
         await user.save();
 
         // ✅ Respond success
-        res.status(200).json({
-            status: true,
-            message: "AMC created successfully",
-            data: amc,
-            walletBalanceAfter: user.walletBalance,
-        });
+
+        ///////////////////////////CUSTOMER UPDATE and CREATE///////////////////////////
+        const ByEmail = typeof req.body.createdByEmail === "string" ? JSON.parse(req.body.createdByEmail) : req.body.createdByEmail;
+
+        const customer = await Customers.findOne({ email: req.body.customerEmail });
+        if (customer) {
+            customer.totalAMCs += 1;
+            customer.totalSpent += amcAmount;
+            customer.activeAMCs = customer.activeAMCs >= 0 && req.body.status === 'active' ? customer.activeAMCs + 1 : customer.activeAMCs - 1;
+            await customer.save();
+        } else {
+            await Customers.create({
+                customerId: `CUSTOMER-${Math.floor(Math.random() * 100)}`,
+                email: req.body.customerEmail, totalAMCs: 1, name: req.body.customerName,
+                mobile: req.body.customerMobile, address: req.body.customerAddress, totalSpent: amcAmount,
+                activeAMCs: req.body.status === 'active' ? 1 : 0,
+                createdByEmail: ByEmail || null
+            });
+        }
+        /////////////////////////////////////////////////////////////////////////////////////////
+        res.status(200).json({ status: true, message: "AMC created successfully", data: amc, walletBalanceAfter: user.walletBalance, });
+
     } catch (error) {
         console.error("❌ Error creating AMC:", error);
         return next(new ErrorHandler(error.message || "Internal Server Error", 500));

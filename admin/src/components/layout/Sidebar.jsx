@@ -271,8 +271,8 @@ export default function Sidebar({ activeKey, onMenuClick }) {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
     sessionStorage.setItem('isAuthenticated', 'false');
-    setIsAuthenticated(false);
     navigate('/');
+    setIsAuthenticated(false);
   };
 
   return (

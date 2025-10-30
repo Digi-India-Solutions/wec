@@ -6,7 +6,10 @@ export default function DataTable({
   data,
   columns,
   loading = false,
-  pagination,
+  currentPage = 1,
+  setCurrentPage,
+  totalPages = 1,
+  pageSize = 10,
   actions
 }) {
   const [sortField, setSortField] = useState('');
@@ -23,10 +26,10 @@ export default function DataTable({
 
   const sortedData = [...data].sort((a, b) => {
     if (!sortField) return 0;
-    
+
     const aValue = a[sortField];
     const bValue = b[sortField];
-    
+
     if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
     if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
     return 0;
@@ -92,13 +95,55 @@ export default function DataTable({
           </tbody>
         </table>
       </div>
-      
-      {pagination && (
+
+      {totalPages > 1 && (
+        <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+          <div>
+            <p className="text-sm text-gray-700">
+              Showing{' '}
+              <span className="font-medium">
+                {(currentPage - 1) * pageSize + 1}
+              </span>{' '}
+              to{' '}
+              <span className="font-medium">
+                {Math.min(currentPage * pageSize, totalPages)}
+              </span>{' '}
+              of{' '}
+              <span className="font-medium">{totalPages}</span> results
+            </p>
+          </div>
+          <div>
+            <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                className="rounded-l-md"
+              >
+                <i className="ri-arrow-left-s-line w-4 h-4 flex items-center justify-center"></i>
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={currentPage === totalPages}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                className="rounded-r-md"
+              >
+                <i className="ri-arrow-right-s-line w-4 h-4 flex items-center justify-center"></i>
+              </Button>
+            </nav>
+          </div>
+        </div>
+      )}
+      {/* {totalPages >= 1 && (
         <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
           <div className="flex-1 flex justify-between sm:hidden">
             <Button
               variant="secondary"
-              disabled={pagination.current === 1}
+              disabled={currentPage === 1}
               onClick={() => pagination.onChange(pagination.current - 1)}
             >
               Previous
@@ -150,7 +195,7 @@ export default function DataTable({
             </div>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

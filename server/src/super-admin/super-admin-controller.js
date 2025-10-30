@@ -60,52 +60,7 @@ exports.superAdminLogin = catchAsyncErrors(async (req, res, next) => {
     }
 });
 
-exports.sendResetPasswordEmail = catchAsyncErrors(async (req, res, next) => {
-    try {
 
-        const { email } = req.body;
-        const superAdmin = await SuperAdmin.findOne({ email });
-
-        if (!superAdmin) {
-            return res.status(200).json({ status: false, message: "Admin not found" });
-        }
-
-        const token = superAdmin.getJwtToken();
-
-        let mail_data = { email: email, token: token, user: 'admin' };
-
-        await sendResetPasswordSuperAdmin(mail_data);
-        res.status(200).json({ status: true, message: "Reset password mail sent successfully" });
-    } catch (error) {
-        return next(new ErrorHandler(error.message, 500));
-    }
-});
-
-exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
-    try {
-        const { token, new_password } = req.body;
-
-        if (!token) {
-            next(new ErrorHandler("No token found", 400));
-        }
-        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-        if (!decoded) {
-            next(new ErrorHandler("Token is not valid", 400));
-        }
-
-        const superAdmin = await SuperAdmin.findById(decoded.id);
-
-        // Update the password
-        const hash = await bcrypt.hash(new_password, 10);
-        superAdmin.password = hash;
-
-        await superAdmin.save();
-        // sendResponse(res, 200, "super-admin password changed successfully", []);
-        res.status(200).json({ status: true, message: "Password changed successfully" });
-    } catch (error) {
-        return next(new ErrorHandler(error.message, 500));
-    }
-});
 
 /////////////////////////////////////// crud operation by admin ////////////////////////////////////////////////////
 
@@ -350,6 +305,54 @@ exports.getAdminUsersByAdminwithPagination = catchAsyncErrors(async (req, res, n
         });
     } catch (error) {
         console.error('Fetch Admin Users Error:', error);
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+
+exports.sendResetPasswordEmail = catchAsyncErrors(async (req, res, next) => {
+    try {
+
+        const { email } = req.body;
+        const superAdmin = await SuperAdmin.findOne({ email });
+
+        if (!superAdmin) {
+            return res.status(200).json({ status: false, message: "Admin not found" });
+        }
+
+        const token = superAdmin.getJwtToken();
+
+        let mail_data = { email: email, token: token, user: 'admin' };
+
+        await sendResetPasswordSuperAdmin(mail_data);
+        res.status(200).json({ status: true, message: "Reset password mail sent successfully" });
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
+    try {
+        const { token, new_password } = req.body;
+
+        if (!token) {
+            next(new ErrorHandler("No token found", 400));
+        }
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        if (!decoded) {
+            next(new ErrorHandler("Token is not valid", 400));
+        }
+
+        const superAdmin = await SuperAdmin.findById(decoded.id);
+
+        // Update the password
+        const hash = await bcrypt.hash(new_password, 10);
+        superAdmin.password = hash;
+
+        await superAdmin.save();
+        // sendResponse(res, 200, "super-admin password changed successfully", []);
+        res.status(200).json({ status: true, message: "Password changed successfully" });
+    } catch (error) {
         return next(new ErrorHandler(error.message, 500));
     }
 });

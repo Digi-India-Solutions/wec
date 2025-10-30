@@ -22,7 +22,7 @@ const transporter = nodemailer.createTransport({
 const sendMail = ({ to, subject, html, from = process.env.MAIL_EMAIL_ID }) => {
     return new Promise((resolve, reject) => {
         const mailOptions = {
-            from: `Anibhavi Creation <${process.env.MAIL_EMAIL_ID}>`,
+            from: `AMC Management System <${process.env.MAIL_EMAIL_ID}>`,
             to,
             subject,
             html,
@@ -38,100 +38,111 @@ const sendMail = ({ to, subject, html, from = process.env.MAIL_EMAIL_ID }) => {
 };
 
 exports.sendResetPasswordSuperAdmin = async (data) => {
-    const { email, token, user } = data;
-    const resetLink =
-        process.env.BASE_URL + `/${user}/reset-password/${token}`;
+  const { email, token, user } = data;
+  const resetLink = `${process.env.BASE_URL}/${user}/reset-password/${token}`;
 
-    const body = `
-    <!DOCTYPE html>
-    <html lang="en">
-    
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Verify your recovery email</title>
-        <style>
-            body {
-                margin: 0 auto;
-                padding: 0;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-            }
-    
-            .container {
-                max-width: 600px;
-                margin: 0 auto;
-                background-color: #fff;
-                border: 1px solid gainsboro;
-                padding: 20px;
-                border-radius: 8px;
-                text-align: center;
-            }
-    
-            .logo {
-                margin-bottom: 20px;
-            }
-    
-            .title {
-                font-size: 24px;
-                color: black;
-                font-weight: 500;
-                margin-top: 5%;
-                margin-bottom: 5%;
-            }
-    
-            .message {
-                font-size: 16px;
-                color: #272727;
-                margin-bottom: 20px;
-                line-height: 1.5;
-                text-align: left;
-            }
-    
-            .note {
-                font-size: 14px;
-                color: #272727;
-                text-align: left;
-                margin-top: 20px;
-                margin-bottom: 5%;
-                line-height: 1.5;
-            }
-    
-            .footer{
-                color: #4a4a4a;
-                font-size: 12px;
-                max-width: 600px;
-                text-align: center;
-            }
-        </style>
-    </head>
-    
-    <body>
-        <div style="margin: 0 auto">
-            <div class="container">
-                // <div class="logo">
-                //   <img src="https://api.emipluscare.in/images/anibhavi-logo.png" style="width: 180px;">
-                // </div>
-                <div class="title">Reset Password</div>
-                <hr style="opacity: 30%; margin-top: 3%; margin-bottom: 3%;" />
-                <div class="message">
-                    Anibhavi Creation received a request to <strong>Change Password</strong>.
-                    <br><br>
-                    Use this link to safely reset your password: <a href="${resetLink}">${resetLink}</a>
-                </div>
-               <p class="footer">All rights reserved © 2024 | Anibhavi Creation | 9/7308, Guru Govind Singh Gali, Kailash Nagar, Gandhinagar, Delhi, 110031</p>
-            </div>
-        </div>
-    </body>
-    
-    </html>
-    `
+  const body = `
+  <!DOCTYPE html>
+  <html lang="en">
+  
+  <head>
+      <meta charset="UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Reset Your Password - AMC Management System</title>
+      <style>
+          body {
+              margin: 0;
+              padding: 0;
+              background-color: #f4f6f8;
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+          }
+          .container {
+              max-width: 600px;
+              background-color: #ffffff;
+              border: 1px solid #e0e0e0;
+              border-radius: 10px;
+              padding: 30px;
+              box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+              text-align: center;
+          }
+          .logo {
+              margin-bottom: 20px;
+          }
+          .title {
+              font-size: 24px;
+              color: #1e293b;
+              font-weight: 600;
+              margin-top: 10px;
+              margin-bottom: 20px;
+          }
+          .message {
+              font-size: 16px;
+              color: #334155;
+              margin-bottom: 30px;
+              line-height: 1.6;
+              text-align: left;
+          }
+          .button {
+              display: inline-block;
+              background-color: #2563eb;
+              color: #ffffff !important;
+              text-decoration: none;
+              padding: 12px 24px;
+              border-radius: 8px;
+              font-weight: 600;
+              margin-top: 10px;
+              transition: background-color 0.3s ease;
+          }
+          .button:hover {
+              background-color: #1d4ed8;
+          }
+          .footer {
+              font-size: 12px;
+              color: #6b7280;
+              text-align: center;
+              margin-top: 30px;
+              line-height: 1.5;
+          }
+      </style>
+  </head>
+  
+  <body>
+      <div class="container">
+          <div class="logo">
+              <img src="https://api.amcmanagement.in/images/logo.png" alt="AMC Management Logo" style="width: 140px;" />
+          </div>
 
-    const subject = "Reset your Password";
-    return await sendMail({ to: email, subject, html: body });
+          <div class="title">Reset Your Password</div>
+          <hr style="opacity: 0.3; margin: 20px 0;" />
+
+          <div class="message">
+              <p>Hello,</p>
+              <p>We received a request to <strong>reset your password</strong> for your AMC Management System account.</p>
+              <p>You can safely reset your password by clicking the button below:</p>
+              <p style="text-align: center;">
+                  <a href="${resetLink}" class="button">Reset Password</a>
+              </p>
+              <p>If you didn’t request this, you can safely ignore this email — your password will remain unchanged.</p>
+          </div>
+
+          <div class="footer">
+              <p>All rights reserved © ${new Date().getFullYear()} | AMC Management System</p>
+              <p>123, Tech Park Avenue, Delhi, India</p>
+          </div>
+      </div>
+  </body>
+  
+  </html>
+  `;
+
+  const subject = "Reset Your Password - AMC Management System";
+  return await sendMail({ to: email, subject, html: body });
 };
+
 
 
 exports.sendOtpForUserSignup = async (data) => {

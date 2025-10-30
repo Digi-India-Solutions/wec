@@ -1,12 +1,12 @@
 
 import { useState } from 'react';
-// import { useAuthStore } from '../../store/authStore';
 import DataTable from '../../components/base/DataTable';
 import Button from '../../components/base/Button';
 import Modal from '../../components/base/Modal';
 import Input from '../../components/base/Input';
 import { useToast } from '../../components/base/Toast';
-// import { mockCustomers, mockAMCs } from '../../mocks/amcs';
+import { getData, serverURL } from '../../services/FetchNodeServices';
+
 
 export const mockAMCs = [
   {
@@ -284,10 +284,6 @@ export const mockCustomers = [
 
 
 export default function CustomersPage() {
-  // const { user } = useAuthStore();
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    sessionStorage.getItem('isAuthenticated') === 'true'
-  );
 
   const [user, setUser] = useState(() => {
     const storedUser = sessionStorage.getItem('user');
@@ -301,7 +297,16 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   // Mock data
-  const [customers] = useState(mockCustomers);
+  const [customers, setCustomers] = useState(mockCustomers);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalData, setTotalData] = useState(0);
+  const [totalActive, setTotalActive] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [totalInActive, setTotalInActive] = useState(0);
+
+
   const [amcs] = useState(mockAMCs);
 
   // Filter customers based on user role
@@ -353,7 +358,7 @@ export default function CustomersPage() {
     },
     { key: 'totalSpent', title: 'Total Spent', render: (value) => `₹${value.toLocaleString()}` },
     {
-      key: 'lastPurchase', title: 'Last Purchase', render: (value) =>
+      key: 'updatedAt', title: 'Last Purchase', render: (value) =>
         new Date(value).toLocaleDateString('en-IN')
     }
   ];
@@ -387,21 +392,96 @@ export default function CustomersPage() {
     return amcs.filter(amc => amc.customerEmail === customerEmail);
   };
 
-  // Calculate stats
-  const stats = {
-    total: userCustomers.length,
-    active: userCustomers.filter(c => c.activeAMCs > 0).length,
-    inactive: userCustomers.filter(c => c.activeAMCs === 0).length,
-    totalRevenue: userCustomers.reduce((sum, c) => sum + c.totalSpent, 0)
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  const fetchCustomers = async () => {
+    try {
+      const queryParamsObj = {
+        limit: pageSize,
+        page: currentPage,
+        search: searchTerm
+      };
+      const queryParams = new URLSearchParams(queryParamsObj).toString();
+      let response = await getData(`api/customer/get-customer-by-admin-with-pagination?${queryParams}`)
+
+      console.log("CUSTOMER response===>", response)
+      if (response?.status === true) {
+        setCustomers(response?.data);
+        setCurrentPage(response?.pagination?.currentPage || 1);
+        setTotalPages(response?.pagination?.totalPages || 1);
+        setTotalData(response?.pagination?.totalData || 0);
+        setTotalActive(response?.pagination?.totalActive || 0);
+        setTotalRevenue(response?.pagination?.totalRevenue || 0);
+        setTotalInActive(response?.pagination?.totalInActive || 0);
+      }
+    } catch (error) {
+      console.error('Error fetching AMC data:', error);
+    }
+  }
+
+  useEffect(() => {
+    fetchCustomers()
+  }, [searchTerm, pageSize, currentPage])
+
+  const formatAmount = (amount) => {
+    if (amount >= 100000) return `${(amount / 100000).toFixed(2)}L`;
+    if (amount >= 1000) return `${(amount / 1000).toFixed(2)}k`;
+    return amount.toString();
   };
 
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  ////////////////////////////////// Export Data ///////////////////////////////////////////////////////////////////////////////////
+  const handleExportData = async () => {
+    try {
+      // Use full URL or a wrapper that returns the raw Response object
+      const url = `${serverURL}/api/customer/export-customers`;
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem('token') || ''}`,
+        },
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Export failed: ${response.status} ${text}`);
+      }
+
+      const blob = await response.blob();
+
+      // Detect filename from header if available
+      const disposition = response.headers.get("content-disposition");
+      let filename = "customers.xlsx";
+      if (disposition && disposition.includes("filename=")) {
+        const match = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^;"']+)/i);
+        if (match && match[1]) {
+          filename = decodeURIComponent(match[1].replace(/['"]/g, ""));
+        }
+      }
+
+      const urlObject = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = urlObject;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(urlObject);
+    } catch (error) {
+      console.error("Export Error:", error);
+      // show toast or user-friendly message
+    }
+  };
+
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   return (
     <div className="p-6 space-y-6">
       <ToastContainer />
 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Customer Database</h1>
-        <Button onClick={() => showToast('Export completed successfully', 'success')}>
+        <Button onClick={handleExportData}>
           <i className="ri-download-line mr-2 w-4 h-4 flex items-center justify-center"></i>
           Export Data
         </Button>
@@ -413,7 +493,7 @@ export default function CustomersPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Customers</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+              <p className="text-2xl font-bold text-gray-900">{totalData}</p>
             </div>
             <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
               <i className="ri-user-heart-line text-white text-xl w-6 h-6 flex items-center justify-center"></i>
@@ -425,7 +505,7 @@ export default function CustomersPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Active Customers</p>
-              <p className="text-2xl font-bold text-green-600">{stats.active}</p>
+              <p className="text-2xl font-bold text-green-600">{totalActive}</p>
             </div>
             <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
               <i className="ri-user-star-line text-white text-xl w-6 h-6 flex items-center justify-center"></i>
@@ -437,7 +517,7 @@ export default function CustomersPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Inactive Customers</p>
-              <p className="text-2xl font-bold text-gray-600">{stats.inactive}</p>
+              <p className="text-2xl font-bold text-gray-600">{totalInActive}</p>
             </div>
             <div className="w-12 h-12 bg-gray-500 rounded-lg flex items-center justify-center">
               <i className="ri-user-unfollow-line text-white text-xl w-6 h-6 flex items-center justify-center"></i>
@@ -449,7 +529,7 @@ export default function CustomersPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-              <p className="text-2xl font-bold text-purple-600">₹{(stats.totalRevenue / 100000).toFixed(1)}L</p>
+              <p className="text-2xl font-bold text-purple-600">₹{formatAmount(totalRevenue)}</p>
             </div>
             <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
               <i className="ri-money-dollar-circle-line text-white text-xl w-6 h-6 flex items-center justify-center"></i>
@@ -491,6 +571,10 @@ export default function CustomersPage() {
         data={filteredData}
         columns={columns}
         actions={renderActions}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        setCurrentPage={setCurrentPage}
+        totalPages={totalPages}
       />
 
       {/* Customer Details Modal */}
@@ -587,9 +671,9 @@ export default function CustomersPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${amc.status === 'active' ? 'bg-green-100 text-green-800' :
-                              amc.status === 'expiring' ? 'bg-yellow-100 text-yellow-800' :
-                                amc.status === 'expired' ? 'bg-red-100 text-red-800' :
-                                  'bg-blue-100 text-blue-800'
+                            amc.status === 'expiring' ? 'bg-yellow-100 text-yellow-800' :
+                              amc.status === 'expired' ? 'bg-red-100 text-red-800' :
+                                'bg-blue-100 text-blue-800'
                             }`}>
                             {amc.status.charAt(0).toUpperCase() + amc.status.slice(1)}
                           </span>
