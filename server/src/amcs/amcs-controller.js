@@ -132,21 +132,43 @@ exports.createAmcByAdmin = catchAsyncErrors(async (req, res, next) => {
         // ✅ Respond success
 
         ///////////////////////////CUSTOMER UPDATE and CREATE///////////////////////////
-        const ByEmail = typeof req.body.createdByEmail === "string" ? JSON.parse(req.body.createdByEmail) : req.body.createdByEmail;
+        const ByEmail =
+            typeof req.body.createdByEmail === "string"
+                ? JSON.parse(req.body.createdByEmail)
+                : req.body.createdByEmail;
+
+        const amcAmounts = Number(req.body.amcAmount) || 0; // ensure numeric value
 
         const customer = await Customers.findOne({ email: req.body.customerEmail });
+
         if (customer) {
-            customer.totalAMCs += 1;
-            customer.totalSpent += amcAmount;
-            customer.activeAMCs = customer.activeAMCs >= 0 && req.body.status === 'active' ? customer.activeAMCs + 1 : customer.activeAMCs - 1;
+            // Safely update counts
+            customer.totalAMCs = (customer.totalAMCs || 0) + 1;
+
+            const currentSpent = Number(customer.totalSpent) || 0;
+            customer.totalSpent = currentSpent + amcAmounts;
+
+            if (req.body.status === "active") {
+                customer.activeAMCs = (customer.activeAMCs || 0) + 1;
+            } else if (
+                req.body.status !== "active" &&
+                (customer.activeAMCs || 0) > 0
+            ) {
+                customer.activeAMCs -= 1;
+            }
+
             await customer.save();
         } else {
             await Customers.create({
-                customerId: `CUSTOMER-${Math.floor(Math.random() * 100)}`,
-                email: req.body.customerEmail, totalAMCs: 1, name: req.body.customerName,
-                mobile: req.body.customerMobile, address: req.body.customerAddress, totalSpent: amcAmount,
-                activeAMCs: req.body.status === 'active' ? 1 : 0,
-                createdByEmail: ByEmail || null
+                customerId: `CUSTOMER-${Math.floor(Math.random() * 10000)}`,
+                email: req.body.customerEmail,
+                name: req.body.customerName,
+                mobile: req.body.customerMobile,
+                address: req.body.customerAddress,
+                totalAMCs: 1,
+                totalSpent: amcAmount,
+                activeAMCs: req.body.status === "active" ? 1 : 0,
+                createdByEmail: ByEmail || null,
             });
         }
         /////////////////////////////////////////////////////////////////////////////////////////
@@ -418,6 +440,18 @@ exports.getAmcByAdmin = catchAsyncErrors(async (req, res, next) => {
         const amc = await AMC.findById(req.params.id).lean();
         if (!amc) return next(new ErrorHandler("AMC not found", 404));
         return sendResponse(res, true, 200, "AMC fetched successfully", amc);
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+});
+
+exports.getAmcByCustomer = catchAsyncErrors(async (req, res, next) => {
+    try {
+        const { customerEmail } = req.query
+        const amc = await AMC.find({ customerEmail: customerEmail })
+
+        if (!amc) return next(new ErrorHandler("AMC not found", 404));
+        res.status(200).json({ status: true, message: "AMC fetched successfully", data: amc });
     } catch (error) {
         return next(new ErrorHandler(error.message, 500));
     }

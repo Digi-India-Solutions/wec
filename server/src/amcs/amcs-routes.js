@@ -7,6 +7,7 @@ const {
     getAmcByAdminWithPagination,
     getAmcByRetailerWithPagination,
     getAmcByDistributorWithPagination,
+    getAmcByCustomer,
     updateAmcByAdmin,
     deleteAmcByAdmin,
 } = require("./amcs-controller");
@@ -18,6 +19,8 @@ router.get("/get-amc-by-admin-with-pagination", getAmcByAdminWithPagination);
 router.get("/get-amc-by-retailer-with-pagination/:id", getAmcByRetailerWithPagination);
 
 router.get("/get-amc-by-distributor-with-pagination/:id", getAmcByDistributorWithPagination);
+
+router.get("/get-amc-by-customer", getAmcByCustomer);
 
 // router.post("/update-amc-by-admin/:id", upload.single("purchaseProof"), updateAmcByAdmin);
 

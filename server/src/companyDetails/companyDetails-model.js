@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
+/** 🏢 Company Settings Schema */
 const companySettingsSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -8,11 +9,27 @@ const companySettingsSchema = new Schema(
     phone: { type: String },
     address: { type: String },
     website: { type: String },
-    logo: { type: String }, // URL (can be uploaded to Cloudinary or local)
-    createdBy: { type: String }, // optional (admin email)
+    logo: { type: String },
+    createdBy: { type: String },
   },
   { timestamps: true }
 );
 
+/** 👨‍💼 Admin Settings Schema */
+const amcSettingsSchema = new mongoose.Schema(
+  {
+    defaultPercentage: { type: Number, required: true },
+    minPercentage: { type: Number, required: true },
+    maxPercentage: { type: Number, required: true },
+    defaultDuration: { type: Number, required: true },
+    termsAndConditions: { type: String, required: true },
+  },
+  { timestamps: true }
+);
+
+// ✅ Define both models
 const CompanySettings = mongoose.model("CompanySettings", companySettingsSchema);
-module.exports = CompanySettings;
+const AMCSettings = mongoose.model("amcSettings", amcSettingsSchema);
+
+// ✅ Export both
+module.exports = { CompanySettings, AMCSettings };

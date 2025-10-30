@@ -381,43 +381,44 @@ export default function WalletPage() {
       </div>
 
       {/* Summary Cards */}
-      {user?.role === 'retailer' || user?.role === 'distributor' && <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Balance</p>
-              <p className="text-2xl font-bold text-green-600">₹{totalBalance.toLocaleString()}</p>
-            </div>
-            <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
-              <i className="ri-wallet-line text-white text-xl w-6 h-6 flex items-center justify-center"></i>
+      {user?.role === 'distributor' || user?.role === 'retailer' ?
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Balance</p>
+                <p className="text-2xl font-bold text-green-600">₹{totalBalance.toLocaleString()}</p>
+              </div>
+              <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+                <i className="ri-wallet-line text-white text-xl w-6 h-6 flex items-center justify-center"></i>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Credits</p>
-              <p className="text-2xl font-bold text-blue-600">₹{totalCredit.toLocaleString()}</p>
-            </div>
-            <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-              <i className="ri-arrow-up-circle-line text-white text-xl w-6 h-6 flex items-center justify-center"></i>
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Credits</p>
+                <p className="text-2xl font-bold text-blue-600">₹{totalCredit.toLocaleString()}</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                <i className="ri-arrow-up-circle-line text-white text-xl w-6 h-6 flex items-center justify-center"></i>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Debits</p>
-              <p className="text-2xl font-bold text-red-600">₹{totalDebit.toLocaleString()}</p>
-            </div>
-            <div className="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center">
-              <i className="ri-arrow-down-circle-line text-white text-xl w-6 h-6 flex items-center justify-center"></i>
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Debits</p>
+                <p className="text-2xl font-bold text-red-600">₹{totalDebit.toLocaleString()}</p>
+              </div>
+              <div className="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center">
+                <i className="ri-arrow-down-circle-line text-white text-xl w-6 h-6 flex items-center justify-center"></i>
+              </div>
             </div>
           </div>
-        </div>
-      </div>}
+        </div> : ''}
 
       {/* Tabs */}
       <div className="border-b border-gray-200">

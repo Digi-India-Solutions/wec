@@ -5,10 +5,11 @@ import Button from '../../components/base/Button';
 import Input from '../../components/base/Input';
 import { useToast } from '../../components/base/Toast';
 import RoleManagement from './components/RoleManagement';
+import { getData, postData } from '../../services/FetchNodeServices';
 
 export default function SettingsPage() {
   // const { user } = useAuthStore();
-   const [isAuthenticated, setIsAuthenticated] = useState(
+  const [isAuthenticated, setIsAuthenticated] = useState(
     sessionStorage.getItem('isAuthenticated') === 'true'
   );
 
@@ -19,6 +20,7 @@ export default function SettingsPage() {
   const { showToast, ToastContainer } = useToast();
   const [activeTab, setActiveTab] = useState('company');
   const [loading, setLoading] = useState(false);
+  const [logoPreview, setLogoPreview] = useState('');
 
   // Company Settings
   const [companySettings, setCompanySettings] = useState({
@@ -42,10 +44,10 @@ export default function SettingsPage() {
 
   // AMC Settings
   const [amcSettings, setAmcSettings] = useState({
-    defaultPercentage: '8',
-    minPercentage: '5',
-    maxPercentage: '15',
-    defaultDuration: '12',
+    defaultPercentage: 8,
+    minPercentage: 5,
+    maxPercentage: 15,
+    defaultDuration: 12,
     termsAndConditions: `1. This AMC covers maintenance and repair services for the specified product.
 2. Service will be provided within 24-48 hours of request.
 3. Parts replacement is covered under this contract.
@@ -69,8 +71,47 @@ export default function SettingsPage() {
   const handleSave = async (section) => {
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      showToast(`${section} settings saved successfully`, 'success');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log('companySettings===>', companySettings.logo)
+      if (section === 'Company') {
+        const formData = new FormData();
+        formData.append('name', companySettings?.name || '');
+        formData.append('email', companySettings?.email || '');
+        formData.append('phone', companySettings?.phone || '');
+        formData.append('address', companySettings?.address || '');
+        formData.append('website', companySettings?.website || '');
+
+        // ✅ Append logo only if it’s a File object (not a string URL)
+        if (companySettings?.logo && typeof companySettings.logo !== 'string') {
+          formData.append('logo', companySettings.logo);
+        }
+
+        // ✅ Send formData instead of companySettings
+        const respons = await postData(`api/company/create-or-update-settings`, formData, true);
+        console.log('respons===>', respons);
+
+        if (respons.status === true) {
+          fetchCompanySettings()
+          showToast(`Company settings saved successfully`, 'success');
+        } else {
+          showToast('Failed to save settings', 'error');
+        }
+      } else if (section === 'Email') {
+        showToast(`${section} settings saved successfully`, 'success');
+      } else if (section === 'AMC') {
+        const respons = await postData(`api/company/create-or-update-amc-settings`, amcSettings, true);
+        if (respons.status === true) {
+          fetchCompanySettings()
+          showToast(`${section} settings saved successfully`, 'success');
+        } else {
+          showToast('Failed to save settings', 'error');
+        }
+      } else if (section === 'Theme') {
+        showToast(`${section} settings saved successfully`, 'success');
+      } else {
+        showToast(`${section} settings saved successfully`, 'success');
+      }
+
     } catch (error) {
       showToast('Failed to save settings', 'error');
     } finally {
@@ -83,11 +124,32 @@ export default function SettingsPage() {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setCompanySettings(prev => ({ ...prev, logo: e.target?.result  }));
+        setLogoPreview(e.target.result);
+        setCompanySettings(prev => ({ ...prev, logo: file, }));
       };
       reader.readAsDataURL(file);
     }
   };
+  const fetchCompanySettings = async () => {
+    try {
+      const response = await getData(`api/company/get-company-settings`);
+      const respons2 = await getData(`api/company/get-AMC-settings`);
+
+      if (response.status === true) {
+        setCompanySettings(response.data);
+        sessionStorage.setItem('companySettings', JSON.stringify(response?.data));
+      }
+      if (respons2.status === true) {
+        setAmcSettings(respons2.data);
+      }
+    } catch (error) {
+      console.error('Error fetching company settings:', error);
+    }
+  }
+  useEffect(() => {
+    fetchCompanySettings();
+  }, []);
+
 
   if (user?.role !== 'admin') {
     return (
@@ -104,7 +166,7 @@ export default function SettingsPage() {
   return (
     <div className="p-6 space-y-6">
       <ToastContainer />
-      
+
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
       </div>
@@ -114,19 +176,18 @@ export default function SettingsPage() {
         <nav className="-mb-px flex space-x-8">
           {[
             { key: 'company', label: 'Company Details', icon: 'ri-building-line' },
-            { key: 'email', label: 'Email Settings', icon: 'ri-mail-settings-line' },
+            // { key: 'email', label: 'Email Settings', icon: 'ri-mail-settings-line' },
             { key: 'amc', label: 'AMC Configuration', icon: 'ri-file-shield-line' },
-            { key: 'theme', label: 'Theme & Branding', icon: 'ri-palette-line' },
+            // { key: 'theme', label: 'Theme & Branding', icon: 'ri-palette-line' },
             { key: 'roles', label: 'Role Management', icon: 'ri-shield-user-line' }
           ].map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer flex items-center space-x-2 ${
-                activeTab === tab.key
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer flex items-center space-x-2 ${activeTab === tab.key
+                ? 'border-blue-500 text-blue-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
             >
               <i className={`${tab.icon} w-4 h-4 flex items-center justify-center`}></i>
               <span>{tab.label}</span>
@@ -139,17 +200,19 @@ export default function SettingsPage() {
       {activeTab === 'company' && (
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-6">Company Information</h3>
-          
+
           <div className="space-y-6">
             {/* Logo Upload */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Company Logo</label>
               <div className="flex items-center space-x-6">
                 <div className="w-24 h-24 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-                  {companySettings.logo ? (
-                    <img src={companySettings.logo} alt="Logo" className="w-full h-full object-cover" />
+                  {logoPreview ? (
+                    <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
                   ) : (
-                    <i className="ri-image-line text-gray-400 text-2xl w-8 h-8 flex items-center justify-center"></i>
+                    companySettings.logo ?
+                      <img src={companySettings?.logo} alt="Logo" className="w-full h-full object-cover" /> :
+                      <i className="ri-image-line text-gray-400 text-2xl w-8 h-8 flex items-center justify-center"></i>
                   )}
                 </div>
                 <div>
@@ -179,7 +242,7 @@ export default function SettingsPage() {
                 onChange={(e) => setCompanySettings(prev => ({ ...prev, name: e.target.value }))}
                 icon="ri-building-line"
               />
-              
+
               <Input
                 label="Email"
                 type="email"
@@ -187,7 +250,7 @@ export default function SettingsPage() {
                 onChange={(e) => setCompanySettings(prev => ({ ...prev, email: e.target.value }))}
                 icon="ri-mail-line"
               />
-              
+
               <Input
                 label="Phone"
                 type="tel"
@@ -195,7 +258,7 @@ export default function SettingsPage() {
                 onChange={(e) => setCompanySettings(prev => ({ ...prev, phone: e.target.value }))}
                 icon="ri-phone-line"
               />
-              
+
               <Input
                 label="Website"
                 value={companySettings.website}
@@ -227,10 +290,10 @@ export default function SettingsPage() {
       )}
 
       {/* Email Settings Tab */}
-      {activeTab === 'email' && (
+      {/* {activeTab === 'email' && (
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-6">SMTP Configuration</h3>
-          
+
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Input
@@ -239,7 +302,7 @@ export default function SettingsPage() {
                 onChange={(e) => setEmailSettings(prev => ({ ...prev, smtpHost: e.target.value }))}
                 icon="ri-server-line"
               />
-              
+
               <Input
                 label="SMTP Port"
                 type="number"
@@ -247,14 +310,14 @@ export default function SettingsPage() {
                 onChange={(e) => setEmailSettings(prev => ({ ...prev, smtpPort: e.target.value }))}
                 icon="ri-router-line"
               />
-              
+
               <Input
                 label="Username"
                 value={emailSettings.smtpUsername}
                 onChange={(e) => setEmailSettings(prev => ({ ...prev, smtpUsername: e.target.value }))}
                 icon="ri-user-line"
               />
-              
+
               <Input
                 label="Password"
                 type="password"
@@ -262,14 +325,14 @@ export default function SettingsPage() {
                 onChange={(e) => setEmailSettings(prev => ({ ...prev, smtpPassword: e.target.value }))}
                 icon="ri-lock-line"
               />
-              
+
               <Input
                 label="From Name"
                 value={emailSettings.fromName}
                 onChange={(e) => setEmailSettings(prev => ({ ...prev, fromName: e.target.value }))}
                 icon="ri-user-heart-line"
               />
-              
+
               <Input
                 label="From Email"
                 type="email"
@@ -296,44 +359,68 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* AMC Configuration Tab */}
       {activeTab === 'amc' && (
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-6">AMC Default Settings</h3>
-          
+
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Input
                 label="Default AMC Percentage"
-                type="number"
+                type="text"
                 value={amcSettings.defaultPercentage}
-                onChange={(e) => setAmcSettings(prev => ({ ...prev, defaultPercentage: e.target.value }))}
+                min="0"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || (/^\d+$/.test(value) && Number(value) >= 0)) {
+                    setAmcSettings((prev) => ({ ...prev, defaultPercentage: value }));
+                  }
+                }}
                 icon="ri-percent-line"
               />
-              
-              <Input
+
+              {/* <Input
                 label="Minimum Percentage"
-                type="number"
+                type="text"
                 value={amcSettings.minPercentage}
-                onChange={(e) => setAmcSettings(prev => ({ ...prev, minPercentage: e.target.value }))}
+                min="0"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || (/^\d+$/.test(value) && Number(value) >= 0)) {
+                    setAmcSettings(prev => ({ ...prev, minPercentage: value }))
+                  }
+                }}
                 icon="ri-arrow-down-line"
               />
-              
+
               <Input
                 label="Maximum Percentage"
-                type="number"
+                type="text"
                 value={amcSettings.maxPercentage}
-                onChange={(e) => setAmcSettings(prev => ({ ...prev, maxPercentage: e.target.value }))}
+                min="0"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || (/^\d+$/.test(value) && Number(value) >= 0)) {
+                    setAmcSettings(prev => ({ ...prev, maxPercentage: value }))
+                  }
+                }}
                 icon="ri-arrow-up-line"
-              />
-              
+              /> */}
+
               <Input
                 label="Default Duration (Months)"
-                type="number"
+                type="text"
                 value={amcSettings.defaultDuration}
-                onChange={(e) => setAmcSettings(prev => ({ ...prev, defaultDuration: e.target.value }))}
+                min="0"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || (/^\d+$/.test(value) && Number(value) >= 0)) {
+                    setAmcSettings(prev => ({ ...prev, defaultDuration: value }))
+                  }
+                }}
                 icon="ri-calendar-line"
               />
             </div>
@@ -363,10 +450,10 @@ export default function SettingsPage() {
       )}
 
       {/* Theme & Branding Tab */}
-      {activeTab === 'theme' && (
+      {/* {activeTab === 'theme' && (
         <div className="bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-6">Theme & Brand Colors</h3>
-          
+
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -415,7 +502,7 @@ export default function SettingsPage() {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Secondary Color</label>
                 <div className="flex items-center space-x-3">
@@ -432,7 +519,7 @@ export default function SettingsPage() {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Accent Color</label>
                 <div className="flex items-center space-x-3">
@@ -451,7 +538,6 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Color Preview */}
             <div className="border rounded-lg p-6">
               <h4 className="text-sm font-medium text-gray-700 mb-4">Preview</h4>
               <div className="space-y-4">
@@ -475,7 +561,7 @@ export default function SettingsPage() {
                     Accent Button
                   </button>
                 </div>
-                
+
                 <div className="flex items-center space-x-4">
                   <div
                     style={{ backgroundColor: themeSettings.primaryColor }}
@@ -507,7 +593,7 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Role Management Tab */}
       {activeTab === 'roles' && (

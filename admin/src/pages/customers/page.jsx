@@ -307,7 +307,7 @@ export default function CustomersPage() {
   const [totalInActive, setTotalInActive] = useState(0);
 
 
-  const [amcs] = useState(mockAMCs);
+  const [amcs, setAmcs] = useState(mockAMCs);
 
   // Filter customers based on user role
   const getUserCustomers = () => {
@@ -388,9 +388,23 @@ export default function CustomersPage() {
   );
 
   // Get customer AMCs
-  const getCustomerAMCs = (customerEmail) => {
-    return amcs.filter(amc => amc.customerEmail === customerEmail);
+  const getCustomerAMCs = async (customerEmail) => {
+    try {
+      const response = await getData(`api/amcs/get-amc-by-customer?customerEmail=${customerEmail}`);
+      console.log("AMC response===>", response?.data)
+      if (response?.status === true) {
+        setAmcs(response?.data)
+      }
+    } catch (error) {
+      console.log(error)
+    }
   };
+
+  useEffect(() => {
+    if (selectedCustomer?.email) {
+      getCustomerAMCs(selectedCustomer?.email);
+    }
+  }, [selectedCustomer]);
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   const fetchCustomers = async () => {
@@ -623,15 +637,15 @@ export default function CustomersPage() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Total Spent</label>
-                    <p className="text-gray-900 font-semibold">₹{selectedCustomer.totalSpent.toLocaleString()}</p>
+                    <p className="text-gray-900 font-semibold">₹{selectedCustomer?.totalSpent.toLocaleString()}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Customer Since</label>
-                    <p className="text-gray-900">{new Date(selectedCustomer.joinedDate).toLocaleDateString('en-IN')}</p>
+                    <p className="text-gray-900">{new Date(selectedCustomer?.createdAt).toLocaleDateString('en-IN')}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-600">Last Purchase</label>
-                    <p className="text-gray-900">{new Date(selectedCustomer.lastPurchase).toLocaleDateString('en-IN')}</p>
+                    <p className="text-gray-900">{new Date(selectedCustomer?.updatedAt).toLocaleDateString('en-IN')}</p>
                   </div>
                 </div>
               </div>
@@ -654,28 +668,28 @@ export default function CustomersPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {getCustomerAMCs(selectedCustomer.email).map((amc) => (
-                      <tr key={amc.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{amc.id}</td>
+                    {amcs?.map((amc) => (
+                      <tr key={amc?._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{amc?.id}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {amc.productBrand} {amc.productType}
+                          {amc?.productBrand} {amc?.productType}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          ₹{amc.amcAmount.toLocaleString()}
+                          ₹{amc?.amcAmount?.toLocaleString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {new Date(amc.startDate).toLocaleDateString('en-IN')}
+                          {new Date(amc?.startDate)?.toLocaleDateString('en-IN')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {new Date(amc.endDate).toLocaleDateString('en-IN')}
+                          {new Date(amc?.endDate)?.toLocaleDateString('en-IN')}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${amc.status === 'active' ? 'bg-green-100 text-green-800' :
-                            amc.status === 'expiring' ? 'bg-yellow-100 text-yellow-800' :
-                              amc.status === 'expired' ? 'bg-red-100 text-red-800' :
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${amc?.status === 'active' ? 'bg-green-100 text-green-800' :
+                            amc?.status === 'expiring' ? 'bg-yellow-100 text-yellow-800' :
+                              amc?.status === 'expired' ? 'bg-red-100 text-red-800' :
                                 'bg-blue-100 text-blue-800'
                             }`}>
-                            {amc.status.charAt(0).toUpperCase() + amc.status.slice(1)}
+                            {amc?.status?.charAt(0)?.toUpperCase() + amc?.status?.slice(1)}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

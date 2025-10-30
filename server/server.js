@@ -24,6 +24,7 @@ const transactionRoutes = require("./src/transaction/transaction-routes");
 const dashboardRoutes = require("./src/dashboard/dashboard-routes");
 const roleRoutes = require("./src/adminRole/adminRole-routes");
 const customerRoutes = require("./src/customer/customer-routes");
+const companyRoutes = require("./src/companyDetails/companyDetails-routes");
 // const usersRoutes = require("./src/users/users-routes");
 
 
@@ -37,6 +38,7 @@ app.use("/api/transaction", transactionRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/role", roleRoutes);
 app.use("/api/customer", customerRoutes);
+app.use("/api/company", companyRoutes);
 // app.use("/api/user", usersRoutes);
 
 const connectDatabase = require("./db/database");
