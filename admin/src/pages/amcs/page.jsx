@@ -50,6 +50,7 @@ export default function AMCsPage() {
   const [allTypes, setAllTypes] = useState([]);
   // Mock data
   const [amcs, setAmcs] = useState(mockAMCs);
+ 
 
   // Filter AMCs based on user role
   const getUserAMCs = () => {
@@ -59,30 +60,13 @@ export default function AMCsPage() {
       return amcs.filter(amc => amc.distributorId === user.id);
     } else if (user?.role === 'retailer') {
       return amcs.filter(amc => amc.retailerId === user.id);
+    } else {
+      return amcs;
     }
     return [];
   };
 
   const userAMCs = getUserAMCs();
-
-
-
-
-  // Get filtered brands, types, models based on selection
-  const getFilteredBrands = () => {
-    if (!selectedCategory) return [];
-    return mockBrands.filter(b => b.categoryId === selectedCategory);
-  };
-
-  const getFilteredTypes = () => {
-    if (!selectedBrand) return [];
-    return mockTypes.filter(t => t.brandId === selectedBrand);
-  };
-
-  const getFilteredModels = () => {
-    if (!selectedType) return [];
-    return mockModels.filter(m => m.typeId === selectedType);
-  };
 
   // Calculate AMC amount
   const calculateAMCAmount = () => {
@@ -99,7 +83,7 @@ export default function AMCsPage() {
     { name: 'productPicture', label: 'Upload Product Picture', type: 'file', required: false, accept: '.pdf,.jpg,.jpeg,.png' },
     { name: 'purchaseProof', label: 'Upload Purchase Proof', type: 'file', required: false, accept: '.pdf,.jpg,.jpeg,.png' },
     { name: 'serialNumber', label: 'Serial / IMEI Number', type: 'text', required: true },
-  ]; 
+  ];
 
   const columns = [
     { key: 'id', title: 'AMC ID', sortable: true },
@@ -135,6 +119,11 @@ export default function AMCsPage() {
     );
   } else if (user?.role === 'distributor') {
     columns.splice(-1, 0, { key: 'retailerName', title: 'Retailer' });
+  } else if (user?.role !== 'retailer' && user?.role !== 'distributor') {
+    columns.splice(-1, 0,
+      { key: 'retailerName', title: 'Retailer' },
+      { key: 'distributorName', title: 'Distributor' }
+    );
   }
 
   const handleAdd = () => {
@@ -267,7 +256,7 @@ export default function AMCsPage() {
       >
         <i className="ri-eye-line w-4 h-4 flex items-center justify-center"></i>
       </Button>
-      {(record.status === 'expired' || record.status === 'expiring') && (
+      { (record.status === 'expired' || record.status === 'expiring') && (
         <Button
           size="sm"
           onClick={() => handleRenew(record)}
@@ -451,9 +440,11 @@ export default function AMCsPage() {
       console.log(error)
     }
   }
+
   useEffect(() => {
     fetchAMCs()
     fetchAllCategories();
+    
   }, [currentPage, pageSize, searchTerm, statusFilter, categoryFilter]);
 
   const fetchAllBrandsByCategory = async () => {
@@ -588,7 +579,7 @@ export default function AMCsPage() {
             >
               <option value="all">All Categories</option>
               {mockCategories.map(category => (
-                <option key={category.id} value={category.name}>{category.name}</option>
+                <option key={category?._id} value={category.name}>{category.name}</option>
               ))}
             </select>
             <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">

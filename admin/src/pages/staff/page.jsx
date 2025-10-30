@@ -1,6 +1,5 @@
 
-import { useState } from 'react';
-import { useAuthStore } from '../../store/authStore';
+import { useEffect, useState } from 'react';
 import DataTable from '../../components/base/DataTable';
 import Button from '../../components/base/Button';
 import Modal from '../../components/base/Modal';
@@ -8,6 +7,7 @@ import SchemaForm from '../../components/base/SchemaForm';
 import ConfirmDialog from '../../components/base/ConfirmDialog';
 import Input from '../../components/base/Input';
 import { useToast } from '../../components/base/Toast';
+import { getData, postData } from '../../services/FetchNodeServices';
 export const mockStaff = [
   {
     id: '1',
@@ -90,7 +90,11 @@ export const mockStaff = [
 ];
 
 export default function StaffPage() {
-  const { user } = useAuthStore();
+  const [user, setUser] = useState(() => {
+    const storedUser = sessionStorage.getItem('user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
+
   const { showToast, ToastContainer } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
@@ -100,7 +104,8 @@ export default function StaffPage() {
   const [deletingStaff, setDeletingStaff] = useState(null);
   const [loading, setLoading] = useState(false);
   const [staff, setStaff] = useState(mockStaff);
-
+  const [allRoles, setAllRoles] = useState([])
+  const [rolePermissions, setRolePermissions] = useState([]);
   // Filter data
   const filteredData = staff.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -109,22 +114,34 @@ export default function StaffPage() {
     return matchesSearch && matchesRole;
   });
 
-  const moduleOptions = [
-    { value: 'users', label: 'User Management' },
-    { value: 'products', label: 'Product Management' },
-    { value: 'amcs', label: 'AMC Management' },
-    { value: 'wallet', label: 'Wallet Management' },
-    { value: 'claims', label: 'Claims Management' },
-    { value: 'reports', label: 'Reports & Analytics' },
-    { value: 'settings', label: 'Settings' }
-  ];
+
+  const [canRead, canWrite, canEdit, canDelete] = (() => {
+    // Default admin/distributor/retailer logic
+    if (['admin'].includes(user?.role)) return [true, true, true, true];
+    if (['distributor'].includes(user?.role)) return [true, true, true, true];
+    if (['retailer'].includes(user?.role)) return [false, false, false, false];
+
+    // Dynamic staff role permissions
+    const modulePerm = rolePermissions?.find(
+      (m) => m.module === 'Staff Management'
+    );
+    if (!modulePerm) return [false, false, false, false];
+
+    return [
+      modulePerm.permissions.includes('read'),
+      modulePerm.permissions.includes('write'),
+      modulePerm.permissions.includes('edit'),
+      modulePerm.permissions.includes('delete'),
+    ];
+  })();
+
 
   const staffFields = [
     { name: 'name', label: 'Staff Name', type: 'text', required: true },
     { name: 'email', label: 'Email', type: 'email', required: true },
     { name: 'password', label: 'Password', type: 'password', required: !editingStaff },
     {
-      name: 'role', label: 'Role', type: 'select', required: true, options: [
+      name: 'role', label: 'Role', type: 'select', required: true, options: allRoles.map(role => ({ value: role?.name, label: role?.name })) || [
         { value: 'support', label: 'Support' },
         { value: 'accounts', label: 'Accounts' },
         { value: 'supervisor', label: 'Supervisor' },
@@ -140,41 +157,87 @@ export default function StaffPage() {
   ];
 
   const columns = [
-    { key: 'name', title: 'Staff Name', sortable: true },
-    { key: 'email', title: 'Email', sortable: true },
     {
-      key: 'role', title: 'Role', render: (value) => (
-        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-          {value.charAt(0).toUpperCase() + value.slice(1)}
-        </span>
-      )
-    },
-    {
-      key: 'assignedModules', title: 'Assigned Modules', render: (value) => (
-        <div className="flex flex-wrap gap-1">
-          {value.slice(0, 2).map(module => (
-            <span key={module} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-              {moduleOptions.find(m => m.value === module)?.label || module}
-            </span>
-          ))}
-          {value.length > 2 && (
-            <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
-              +{value.length - 2} more
-            </span>
-          )}
+      key: 'name',
+      title: 'Staff Name',
+      sortable: true,
+      render: (value, record) => (
+        <div className="flex flex-col">
+          <span className="font-medium text-gray-800">{record?.name}</span>
+          <span className="text-xs text-gray-500">{record?.email}</span>
         </div>
-      )
+      ),
     },
     {
-      key: 'status', title: 'Status', render: (value) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${value === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-          }`}>
-          {value.charAt(0).toUpperCase() + value.slice(1)}
+      key: 'role',
+      title: 'Role',
+      render: (value) => (
+        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+          {value ? value.charAt(0).toUpperCase() + value.slice(1) : 'N/A'}
         </span>
-      )
+      ),
     },
-    { key: 'createdDate', title: 'Created Date', sortable: true }
+    {
+      key: 'staffRole.permissions',
+      title: 'Assigned Modules',
+      render: (_, record) => {
+        const modules = record?.staffRole?.permissions?.map(p => p.module) || [];
+        return (
+          <div className="flex flex-wrap gap-1">
+            {modules.slice(0, 2).map((module) => (
+              <span
+                key={module}
+                className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs"
+              >
+                {module}
+              </span>
+            ))}
+            {modules.length > 2 && (
+              <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                +{modules.length - 2} more
+              </span>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: 'status',
+      title: 'Status',
+      render: (value) => (
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${value === 'active'
+            ? 'bg-green-100 text-green-800'
+            : 'bg-red-100 text-red-800'
+            }`}
+        >
+          {value ? value.charAt(0).toUpperCase() + value.slice(1) : 'N/A'}
+        </span>
+      ),
+    },
+    {
+      key: 'createdAt',
+      title: 'Created Date',
+      sortable: true,
+      render: (value) =>
+        value ? new Date(value).toLocaleDateString() : 'N/A',
+    },
+    {
+      key: 'createdByEmail',
+      title: 'Created By',
+      render: (value, record) => (
+        <div className="flex flex-col">
+          <span className="font-medium text-gray-700">
+            {record?.createdByEmail?.name || 'N/A'}
+          </span>
+          <span className="text-xs text-gray-500">
+            {record?.createdByEmail?.email || 'N/A'}
+          </span>
+        </div>
+      ),
+    },
   ];
+
 
   const handleAdd = () => {
     setEditingStaff(null);
@@ -197,24 +260,31 @@ export default function StaffPage() {
     setLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
-
+      const roles = allRoles.filter((role) => role.name === formData.role);
       if (editingStaff) {
-        setStaff(prev => prev.map(s => s.id === editingStaff.id ? { ...s, ...formData } : s));
-        showToast('Staff member updated successfully', 'success');
+        const q = `api/admin/update-admin-by-admin/${editingStaff?._id}`
+        const respons = await postData(q, { ...formData, createdByEmail: { email: user?.email, name: user?.name }, staffRole: roles[0]?._id, });
+        if (respons.status === true) {
+          fetchAllStaff()
+          fetchRoles()
+          setStaff(prev => prev.map(s => s?._id === editingStaff?._id ? { ...s, ...formData } : s));
+          showToast('Staff member updated successfully', 'success');
+        }
       } else {
         const newStaff = {
-          id: Date.now().toString(),
+          id: Date.now()?.toString(),
           ...formData,
-          assignedModules: ['users', 'amcs'], // Default modules
-          permissions: {
-            users: { read: true, write: false, edit: false, delete: false },
-            amcs: { read: true, write: true, edit: false, delete: false }
-          },
-          createdDate: new Date().toISOString().split('T')[0],
-          lastLogin: null
+          staffRole: roles[0]?._id,
+          createdByEmail: { email: user?.email, name: user?.name },
         };
-        setStaff(prev => [...prev, newStaff]);
-        showToast('Staff member added successfully', 'success');
+        const q = 'api/admin/create-admin-by-admin'
+        const respons = await postData(q, newStaff);
+        if (respons.status === true) {
+          fetchAllStaff()
+          fetchRoles()
+          setStaff(prev => [...prev, newStaff]);
+          showToast('Staff member added successfully', 'success');
+        }
       }
 
       setIsModalOpen(false);
@@ -229,10 +299,18 @@ export default function StaffPage() {
     setLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      setStaff(prev => prev.filter(s => s.id !== deletingStaff.id));
-      showToast('Staff member deleted successfully', 'success');
-      setIsDeleteDialogOpen(false);
-      setDeletingStaff(null);
+
+      const q = `api/admin/delete-admin-user-by-admin/${deletingStaff?._id}`
+      const respons = await getData(q);
+      if (respons.status === true) {
+        fetchAllStaff()
+        fetchRoles()
+        setStaff(prev => prev.filter(s => s._id !== deletingStaff._id));
+        showToast('Staff member deleted successfully', 'success');
+        setIsDeleteDialogOpen(false);
+        setDeletingStaff(null);
+      }
+
     } catch (error) {
       showToast('Delete failed', 'error');
     } finally {
@@ -242,22 +320,22 @@ export default function StaffPage() {
 
   const renderActions = (record) => (
     <div className="flex space-x-2">
-      <Button
+      {canEdit && <Button
         size="sm"
         variant="ghost"
         onClick={() => handleEdit(record)}
         title="Edit"
       >
         <i className="ri-edit-line w-4 h-4 flex items-center justify-center"></i>
-      </Button>
-      <Button
+      </Button>}
+      {canDelete && <Button
         size="sm"
         variant="ghost"
         onClick={() => handleDelete(record)}
         title="Delete"
       >
         <i className="ri-delete-bin-line w-4 h-4 flex items-center justify-center text-red-600"></i>
-      </Button>
+      </Button>}
       <Button
         size="sm"
         variant="ghost"
@@ -268,8 +346,62 @@ export default function StaffPage() {
       </Button>
     </div>
   );
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////
+  const fetchRoles = async () => {
+    try {
+      const response = await getData('api/role/get-all-roles');
+      if (response?.status === true) {
+        setAllRoles(response?.data);
+      }
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+    }
+  }
 
-  if (user?.role !== 'admin') {
+  const fetchAllStaff = async () => {
+    try {
+      // Prepare query params
+      const staffRoles = allRoles?.map(role => role?.name) || [];
+      const query = new URLSearchParams({
+        staffRole: JSON.stringify(staffRoles)
+      }).toString();
+      // Fetch data
+      const response = await getData(`api/admin/get-all-staff-by-admin?${query}`);
+      if (response?.status === true) {
+        setStaff(response?.data);
+      }
+    } catch (error) {
+      console.error('Error fetching staff:', error);
+      showToast(error?.response?.data?.message || 'Failed to fetch staff', 'error');
+    }
+  };
+
+  const fetchUserRoleData = async () => {
+    try {
+      const response = await getData(`api/admin/get-admin-users-by-id/${user?.id}`);
+      console.log('response==>getAdminUsersByAdmin', response)
+      if (response?.status) {
+        // setUsersData(response.data.role);
+        setRolePermissions(response.data?.staffRole?.permissions);
+      } else {
+        console.warn('Failed to fetch admin users:', response.message);
+      }
+    } catch (error) {
+      console.error('Error fetching admin users:', error);
+    }
+  }
+
+  useEffect(() => {
+    fetchAllStaff();
+  }, [allRoles])
+
+  useEffect(() => {
+    fetchRoles();
+    fetchUserRoleData()
+  }, [])
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+  if (user?.role === 'distributor' && user?.role === 'retailer') {
     return (
       <div className="p-6">
         <div className="text-center py-12">
@@ -287,10 +419,12 @@ export default function StaffPage() {
 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Staff Management</h1>
-        <Button onClick={handleAdd}>
-          <i className="ri-add-line mr-2 w-4 h-4 flex items-center justify-center"></i>
-          Add Staff Member
-        </Button>
+        {canWrite && (
+          <Button onClick={handleAdd}>
+            <i className="ri-add-line mr-2 w-4 h-4 flex items-center justify-center"></i>
+            Add Staff Member
+          </Button>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -375,7 +509,7 @@ export default function StaffPage() {
       <DataTable
         data={filteredData}
         columns={columns}
-        actions={renderActions}
+        actions={canEdit === true || canDelete === true ? renderActions : ''}
       />
 
       {/* Add/Edit Modal */}

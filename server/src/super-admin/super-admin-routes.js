@@ -3,7 +3,7 @@ const router = express.Router();
 
 const { createSuperAdmin, superAdminLogin, sendResetPasswordEmail, resetPassword, createAdminByAdmin,
     getAdminUsersByAdminwithPagination, updateAdminByAdmin, deleteAdminUserByAdmin, getDistributorsByAdmin, getRetailersByAdminwithPagination,
-    getRetailersByDistributor } = require("./super-admin-controller.js");
+    getRetailersByDistributor ,getAllStaffByAdmin,getAdminUsersById } = require("./super-admin-controller.js");
 
 
 /////////////////////////////////////// crud operation by admin ////////////////////////////////////////////////////
@@ -22,6 +22,10 @@ router.get("/getRetailersByDistributorwithPagination", getRetailersByDistributor
 router.post("/update-admin-by-admin/:id", updateAdminByAdmin);
 
 router.get("/delete-admin-user-by-admin/:id", deleteAdminUserByAdmin);
+
+router.get("/get-all-staff-by-admin", getAllStaffByAdmin)
+
+router.get("/get-admin-users-by-id/:id", getAdminUsersById)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 router.post("/create-admin", createSuperAdmin);

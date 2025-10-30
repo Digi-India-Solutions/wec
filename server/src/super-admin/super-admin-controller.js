@@ -42,7 +42,7 @@ exports.createSuperAdmin = catchAsyncErrors(async (req, res, next) => {
 exports.superAdminLogin = catchAsyncErrors(async (req, res, next) => {
     try {
         const { email, password } = req.body;
-        const superAdmin = await SuperAdmin.findOne({ email });
+        const superAdmin = await SuperAdmin.findOne({ email }).populate('staffRole');
 
         if (!superAdmin) {
             return res.status(200).json({ status: false, message: "Super Admin does not exist" })
@@ -110,7 +110,7 @@ exports.resetPassword = catchAsyncErrors(async (req, res, next) => {
 /////////////////////////////////////// crud operation by admin ////////////////////////////////////////////////////
 
 exports.createAdminByAdmin = catchAsyncErrors(async (req, res, next) => {
-    console.log('req.body::===>', req.body)
+
     try {
         const { email, password } = req.body;
         // console.log('req.body::', req.body.userForm)
@@ -129,24 +129,27 @@ exports.createAdminByAdmin = catchAsyncErrors(async (req, res, next) => {
                 await user.save();
             }
         }
+        if (req.body?.createdByEmail) {
+            const user = await SuperAdmin.findOne({ email: req.body.createdByEmail.email, name: req.body.createdByEmail.name });
+            // console.log('req.body::==>', user)
 
-        const user = await SuperAdmin.findOne({ email: req.body.createdByEmail.email, name: req.body.createdByEmail.name });
-        console.log('req.body::', user)
-
-        if (user) {
-            if (req.body.role === 'distributor') {
-                user.totalDistributors += 1;
+            if (user) {
+                if (req.body.role === 'distributor') {
+                    user.totalDistributors += 1;
+                }
+                else if (req.body.role === 'retailer') {
+                    user.totalRetailers += 1;
+                }
+                await user.save();
             }
-            else if (req.body.role === 'retailer') {
-                user.totalRetailers += 1;
-            }
-            await user.save();
         }
-        const currentSuperAdmin = await SuperAdmin.findOne({ email });
+        // console.log('BODY=>', req.body.email)
+        const currentSuperAdmin = await SuperAdmin.findOne({ email: email });
 
         if (currentSuperAdmin) {
             return res.status(200).json({ status: false, message: "Super Admin email already exist." });
         }
+
         const newSuperAdmin = await SuperAdmin.create({ ...req.body, password: hash });
 
         res.status(200).json({ status: true, message: "Super Admin created successfully", data: newSuperAdmin });
@@ -574,6 +577,52 @@ exports.deleteAdminUserByAdmin = catchAsyncErrors(async (req, res, next) => {
     sendResponse(res, 200, 'Admin user deleted successfully', user);
 });
 
+
+exports.getAllStaffByAdmin = catchAsyncErrors(async (req, res, next) => {
+    try {
+        let { staffRole } = req.query;
+
+        // Parse JSON if needed
+        if (typeof staffRole === 'string') {
+            try {
+                staffRole = JSON.parse(staffRole);
+            } catch {
+                staffRole = [staffRole]; // fallback if it’s a single string
+            }
+        }
+
+        // Ensure it’s an array
+        if (!Array.isArray(staffRole)) {
+            staffRole = [];
+        }
+
+        console.log("Parsed staffRole:", staffRole);
+
+        const users = await SuperAdmin.find({ role: { $in: staffRole } }).populate('staffRole');
+
+        return res.status(200).json({
+            status: true,
+            message: 'Staff fetched successfully',
+            data: users
+        });
+
+    } catch (error) {
+        console.error("Error in getAllStaffByAdmin:", error);
+        return next(new ErrorHandler(error.message || 'Server Error', 500));
+    }
+});
+
+exports.getAdminUsersById = catchAsyncErrors(async (req, res, next) => {
+    try {
+        const id = req.params.id;
+        const user = await SuperAdmin.findById(id).populate('staffRole');
+        if (!user) return next(new ErrorHandler('Admin user not found', 404));
+        res.status(200).json({ status: true, message: "Admin user fetched successfully", data: user })
+    } catch (error) {
+        console.error("Error in getAdminUsersById:", error);
+        return next(new ErrorHandler(error.message || 'Server Error', 500));
+    }
+})
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 

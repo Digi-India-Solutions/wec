@@ -48,6 +48,27 @@ export default function WalletPage() {
   const [totalBalance, setTotalBalance] = useState(0);
   const [totalCredit, setTotalCredit] = useState(0);
   const [totalDebit, setTotalDebit] = useState(0);
+  const [rolePermissions, setRolePermissions] = useState([]);
+
+  const [canRead, canWrite, canEdit, canDelete] = (() => {
+    // Default admin/distributor/retailer logic
+    if (['admin'].includes(user?.role)) return [true, true, true, true];
+    if (['distributor'].includes(user?.role)) return [true, true, true, true];
+    if (['retailer'].includes(user?.role)) return [false, false, false, false];
+
+    // Dynamic staff role permissions
+    const modulePerm = rolePermissions?.find(
+      (m) => m.module === 'Wallet Management'
+    );
+    if (!modulePerm) return [false, false, false, false];
+
+    return [
+      modulePerm.permissions.includes('read'),
+      modulePerm.permissions.includes('write'),
+      modulePerm.permissions.includes('edit'),
+      modulePerm.permissions.includes('delete'),
+    ];
+  })();
 
   const availableUsers = user.role === 'admin' ? [...retailers] : retailers;
   // console.log('availableUsers==>', availableUsers)
@@ -199,15 +220,15 @@ export default function WalletPage() {
 
   const renderBalanceActions = (record) => (
     <div className="flex space-x-2">
-      <Button
+      {canWrite && <Button
         size="sm"
         onClick={() => handleCredit(record)}
         disabled={record.status !== 'active'}
       >
         <i className="ri-add-line mr-1 w-4 h-4 flex items-center justify-center"></i>
         Add
-      </Button>
-      <Button
+      </Button>}
+      {canEdit && <Button
         size="sm"
         variant="secondary"
         onClick={() => handleDebit(record)}
@@ -215,7 +236,7 @@ export default function WalletPage() {
       >
         <i className="ri-subtract-line mr-1 w-4 h-4 flex items-center justify-center"></i>
         Remove
-      </Button>
+      </Button>}
     </div>
   );
 
@@ -304,8 +325,25 @@ export default function WalletPage() {
     }
   }
 
+  const fetchUserRoleData = async () => {
+    try {
+      const response = await getData(`api/admin/get-admin-users-by-id/${user?.id}`);
+      console.log('response==>getAdminUsersByAdmin', response)
+      if (response?.status) {
+        // setUsersData(response.data.role);
+        setRolePermissions(response.data?.staffRole?.permissions);
+      } else {
+        console.warn('Failed to fetch admin users:', response.message);
+      }
+    } catch (error) {
+      console.error('Error fetching admin users:', error);
+    }
+  }
+
+
   useEffect(() => {
     fetchTransactions();
+
   }, [transactionUserId, transactionCurrentPage, currentPage,])
 
   useEffect(() => {
@@ -313,6 +351,7 @@ export default function WalletPage() {
     fetchRetailers()
     // fetchTransactions();
     fetchWalletManagement()
+    fetchUserRoleData()
   }, [transactionCurrentPage, currentPage,])
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   return (
@@ -321,7 +360,7 @@ export default function WalletPage() {
 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Wallet Management</h1>
-        {(user?.role === 'admin' || user?.role === 'distributor') && (
+        {(user?.role !== 'retailer' && canWrite) && (
           <div className="flex space-x-3">
             <Button onClick={() => setIsCreditModalOpen(true)}>
               <i className="ri-add-line mr-2 w-4 h-4 flex items-center justify-center"></i>
@@ -342,7 +381,7 @@ export default function WalletPage() {
       </div>
 
       {/* Summary Cards */}
-      {user?.role !== 'admin' && <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {user?.role === 'retailer' || user?.role === 'distributor' && <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -423,7 +462,9 @@ export default function WalletPage() {
               user.email.toLowerCase().includes(searchTerm.toLowerCase())
           )}
           columns={balanceColumns}
-          actions={user.role !== 'retailer' ? renderBalanceActions : undefined}
+          actions={user?.role !== 'retailer'
+            ? (canWrite || canEdit ? renderBalanceActions : undefined)
+            : undefined}
           setCurrentPage={setCurrentPage}
           currentPage={currentPage}
           totalPages={totalPages}
@@ -498,8 +539,8 @@ export default function WalletPage() {
                         <div className="text-right">
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-medium ${user?.role === 'distributor'
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-green-100 text-green-800'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-green-100 text-green-800'
                               }`}
                           >
                             {user?.role?.charAt(0)?.toUpperCase() +

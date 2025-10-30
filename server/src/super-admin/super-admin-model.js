@@ -54,6 +54,11 @@ const superAdminSchema = new Schema({
         type: String,
         default: "admin",
     },
+    staffRole: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "AdminRole",
+        required: false
+    },
     status: {
         type: String,
         default: "Active",

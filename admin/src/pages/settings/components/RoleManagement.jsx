@@ -1,10 +1,11 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import DataTable from '../../../components/base/DataTable';
 import Modal from '../../../components/base/Modal';
 import Button from '../../../components/base/Button';
 import Input from '../../../components/base/Input';
 import { useToast } from '../../../components/base/Toast';
+import { getData, postData } from '../../../services/FetchNodeServices';
 // import {
 //   // mockRoles,
 //   // availableModules,
@@ -18,8 +19,9 @@ export const availablePermissions = ['read', 'write', 'edit', 'delete'];
 
 export const availableModules = [
   'Dashboard',
-  'Distributors',
-  'Retailers',
+  // 'Distributors',
+  // 'Retailers',
+  'User Management',
   'Products',
   'AMC Management',
   'Wallet Management',
@@ -107,9 +109,7 @@ export default function RoleManagement() {
   const [loading, setLoading] = useState(false);
 
   // Form state
-  const [formData, setFormData] = useState({
-    name: '', description: '', permissions: [], status: 'active',
-  });
+  const [formData, setFormData] = useState({ name: '', description: '', permissions: [], status: 'active', });
 
   const handleAdd = () => {
     setEditingRole(null);
@@ -155,8 +155,12 @@ export default function RoleManagement() {
     setLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 500));
-      setRoles((prev) => prev.filter((r) => r.id !== role.id));
-      showToast('Role deleted successfully', 'success');
+      const response = await getData(`api/role/delete-roles-by-admin/${role?._id}`);
+      if (response?.status === true) {
+        fetchRoles()
+        setRoles((prev) => prev.filter((r) => r?._id !== role?._id));
+        showToast('Role deleted successfully', 'success');
+      }
     } catch (error) {
       showToast('Failed to delete role', 'error');
     } finally {
@@ -171,11 +175,8 @@ export default function RoleManagement() {
     }
 
     // Check for duplicate role names
-    const existingRole = roles.find(
-      (r) =>
-        r.name.toLowerCase() === formData.name.toLowerCase() &&
-        r.id !== editingRole?.id,
-    );
+    const existingRole = roles.find((r) => r?.name?.toLowerCase() === formData?.name?.toLowerCase() && r?._id !== editingRole?._id);
+
     if (existingRole) {
       showToast('Role name already exists', 'error');
       return;
@@ -186,13 +187,13 @@ export default function RoleManagement() {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const roleData = {
-        id: editingRole?.id || Date.now().toString(),
+        id: editingRole?._id || Date.now().toString(),
         name: formData.name,
         description: formData.description,
         permissions: formData.permissions.filter(
           (p) => p.permissions.length > 0,
         ),
-        status: formData.status,
+        status: formData?.status,
         createdDate:
           editingRole?.createdDate ||
           new Date().toISOString().split('T')[0],
@@ -200,13 +201,21 @@ export default function RoleManagement() {
       };
 
       if (editingRole) {
-        setRoles((prev) =>
-          prev.map((r) => (r.id === editingRole.id ? roleData : r)),
-        );
-        showToast('Role updated successfully', 'success');
+        const respons = await postData(`api/role/update-roles-by-admin/${editingRole?._id}`, roleData);
+        if (respons?.status === true) {
+          fetchRoles()
+          setRoles((prev) => prev.map((r) => (r?._id === editingRole?._id ? roleData : r)));
+          showToast('Role updated successfully', 'success');
+        }
       } else {
-        setRoles((prev) => [...prev, roleData]);
-        showToast('Role created successfully', 'success');
+        const respons = await postData('api/role/create-roles-by-admin', roleData);
+        console.log("SSSSS:==>AAAA", respons)
+        if (respons?.status === false) {
+          fetchRoles()
+          setRoles((prev) => [...prev, roleData]);
+          showToast('Role created successfully', 'success');
+        }
+
       }
 
       setIsModalOpen(false);
@@ -281,8 +290,8 @@ export default function RoleManagement() {
       render: (value, role) => (
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${role.status === 'active'
-              ? 'bg-green-100 text-green-800'
-              : 'bg-gray-100 text-gray-800'
+            ? 'bg-green-100 text-green-800'
+            : 'bg-gray-100 text-gray-800'
             }`}
         >
           {role.status === 'active' ? 'Active' : 'Inactive'}
@@ -300,7 +309,24 @@ export default function RoleManagement() {
       ),
     },
   ];
+  ///////////////////////////////////////////////////////////////////////////////////////
+  const fetchRoles = async () => {
+    try {
+      const response = await getData('api/role/get-all-roles');
+      console.log("response==>response==> response==>", response)
+      if (response?.status === true) {
+        setRoles(response?.data);
+      }
+    } catch (error) {
+      console.error('Error fetching roles:', error);
+    }
+  }
 
+  useEffect(() => {
+    fetchRoles();
+  }, [])
+
+  //////////////////////////////////////////////////////////////////////////////////////
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -401,7 +427,7 @@ export default function RoleManagement() {
                 variant="danger"
                 size="sm"
                 onClick={() => handleDelete(role)}
-                disabled={role.name === 'Super Admin'}
+                disabled={role?.name === 'Super Admin'}
               >
                 <i className="ri-delete-bin-line w-4 h-4 flex items-center justify-center"></i>
               </Button>

@@ -48,6 +48,29 @@ export default function ProductsPage() {
   const [allTypes, setAllTypes] = useState([]);
   const [filter, setFilter] = useState({});
 
+  const [rolePermissions, setRolePermissions] = useState([]);
+
+  const [canRead, canWrite, canEdit, canDelete] = (() => {
+    // Default admin/distributor/retailer logic
+    if (['admin'].includes(user?.role)) return [true, true, true, true];
+    if (['distributor'].includes(user?.role)) return [true, true, true, true];
+    if (['retailer'].includes(user?.role)) return [false, false, false, false];
+
+    // Dynamic staff role permissions
+    const modulePerm = rolePermissions?.find(
+      (m) => m.module === 'Products'
+    );
+    if (!modulePerm) return [false, false, false, false];
+
+    return [
+      modulePerm.permissions.includes('read'),
+      modulePerm.permissions.includes('write'),
+      modulePerm.permissions.includes('edit'),
+      modulePerm.permissions.includes('delete'),
+    ];
+  })();
+
+
   const getCurrentData = () => {
     switch (activeTab) {
       case 'categories': return categories;
@@ -339,6 +362,22 @@ export default function ProductsPage() {
       console.log(error)
     }
   }
+
+  const fetchUserRoleData = async () => {
+    try {
+      const response = await getData(`api/admin/get-admin-users-by-id/${user?.id}`);
+      console.log('response==>getAdminUsersByAdmin', response)
+      if (response?.status) {
+        // setUsersData(response.data.role);
+        setRolePermissions(response.data?.staffRole?.permissions);
+      } else {
+        console.warn('Failed to fetch admin users:', response.message);
+      }
+    } catch (error) {
+      console.error('Error fetching admin users:', error);
+    }
+  }
+
   useEffect(() => {
     fetchCategoryData()
     fetchAllCategories();
@@ -349,28 +388,30 @@ export default function ProductsPage() {
     fetchTypeData()
     fetchAllType();
 
+    fetchUserRoleData()
+
   }, [searchTerm, statusFilter, page?.categoryPage, page?.brandPage,
     page?.typePage, activeTab, categoryFilter, brandFilter, typeFilter]);
   const renderActions = (record) => (
     <div className="flex space-x-2">
-      <Button
+      {canEdit && <Button
         size="sm"
         variant="ghost"
         onClick={() => handleEdit(record)}
       >
         <i className="ri-edit-line w-4 h-4 flex items-center justify-center"></i>
-      </Button>
-      <Button
+      </Button>}
+      {canDelete && <Button
         size="sm"
         variant="ghost"
         onClick={() => handleDelete(record)}
       >
         <i className="ri-delete-bin-line w-4 h-4 flex items-center justify-center text-red-600"></i>
-      </Button>
+      </Button>}
     </div>
   );
 
-  if (user?.role !== 'admin') {
+  if (user?.role === 'distributor' || user?.role === 'retailer') {
     return (
       <div className="p-6">
         <div className="text-center py-12">
@@ -388,10 +429,10 @@ export default function ProductsPage() {
 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Product Management</h1>
-        <Button onClick={handleAdd}>
+        {canWrite && <Button onClick={handleAdd}>
           <i className="ri-add-line mr-2 w-4 h-4 flex items-center justify-center"></i>
           Add {activeTab.slice(0, -1)}
-        </Button>
+        </Button>}
       </div>
 
       {/* Tabs */}
@@ -506,7 +547,7 @@ export default function ProductsPage() {
         <DataTable
           data={categories}
           columns={getColumns()}
-          actions={renderActions}
+          actions={canEdit === true || canDelete === true ? renderActions : ''}
           setCurrentPage={(newPage) => setPage((prev) => ({ ...prev, categoryPage: newPage }))}
           currentPage={page.categoryPage}
           totalPages={Math.ceil(totalData.categoryTotal / page.categoryLimit)}
@@ -518,7 +559,7 @@ export default function ProductsPage() {
         <DataTable
           data={brands}
           columns={getColumns()}
-          actions={renderActions}
+          actions={canEdit === true || canDelete === true ? renderActions : ''}
           setCurrentPage={(newPage) => setPage((prev) => ({ ...prev, brandPage: newPage }))}
           currentPage={page.brandPage}
           totalPages={Math.ceil(totalData.brandTotal / page.brandLimit)}
@@ -530,7 +571,7 @@ export default function ProductsPage() {
         <DataTable
           data={types}
           columns={getColumns()}
-          actions={renderActions}
+          actions={canEdit === true || canDelete === true ? renderActions : ''}
           setCurrentPage={(newPage) => setPage((prev) => ({ ...prev, typePage: newPage }))}
           currentPage={page.typePage}
           totalPages={Math.ceil(totalData.typeTotal / page.typeLimit)}

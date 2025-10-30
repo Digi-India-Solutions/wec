@@ -48,10 +48,12 @@ export default function SchemaForm({
     e.preventDefault();
     setLoading(true);
     let data = {};
+    const claimId = `CLM${Date.now()}${Math.floor(Math.random() * 100)}`;
     data = { ...formData, createdByEmail: { name: user?.name, email: user?.email } }
     console.log("SSSSSSSS:==>SSSSSSSS:==>", data)
     const fomatDatas = new FormData();
-    fomatDatas.append("customerName", formData.customerName),
+    fomatDatas.append("claimId", formData.claimId || claimId),
+      fomatDatas.append("customerName", formData.customerName),
       fomatDatas.append("amcNumber", formData.amcNumber),
       fomatDatas.append("claimValue", formData.claimValue),
       fomatDatas.append("productDetails", formData.productDetails),
@@ -64,9 +66,9 @@ export default function SchemaForm({
       fomatDatas.append("status", formData.status ? formData.status : 'pending'),
       fomatDatas.append("createdByEmail", JSON.stringify(data.createdByEmail))
 
-    const q = editingUser ? `api/admin/update-claims-by-admin/${editingUser?._id}` : 'api/claims/create-claim-by-admin'
+    const q = editingUser ? `api/claims/update-claim-by-admin/${editingUser?._id}` : 'api/claims/create-claim-by-admin'
     const respons = await postData(q, fomatDatas);
-    // console.log("SSSSSSSS:==>", respons)
+    console.log("SSSSSSSS:==>", respons)
 
     if (respons.status === true) {
       setLoading(false);

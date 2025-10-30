@@ -98,16 +98,34 @@ exports.getClaimByAdminWithPagination = catchAsyncErrors(async (req, res, next) 
 exports.updateClaimByAdmin = catchAsyncErrors(async (req, res, next) => {
     try {
         const { id } = req.params;
-        const updatedClaim = await Claims.findByIdAndUpdate(id, req.body, {
+        const { billPhoto } = req.body;
+        console.log("BODY::===>", req.body);
+        console.log("BODY::===>", req.file);
+        const existingClaim = await Claims.findById(id);
+        console.log("existingClaim::===>", existingClaim);
+
+        if (!existingClaim) {
+            return next(new ErrorHandler("Claim not found", 404));
+        }
+        let imageUrls = null;
+        if (req.file) {
+            if (existingClaim.billPhoto) {
+                await deleteImage(existingClaim.billPhoto);
+            }
+            const localImagePath = req.file.path;
+            const imageUrl = await uploadImage(localImagePath);
+            deleteLocalFile(localImagePath);
+            imageUrls = imageUrl;
+        } else {
+            imageUrls = existingClaim.billPhoto
+        }
+
+        const updatedClaim = await Claims.findByIdAndUpdate(id, { ...req.body, billPhoto: imageUrls }, {
             new: true,
             runValidators: true,
         });
+        res.status(200).json({ status: true, message: 'Claim updated successfully', data: updatedClaim });
 
-        if (!updatedClaim) {
-            return next(new ErrorHandler("Claim not found", 404));
-        }
-
-        return sendResponse(res, true, 200, "Claim updated successfully", updatedClaim);
     } catch (error) {
         return next(new ErrorHandler(error.message, 500));
     }
@@ -117,14 +135,33 @@ exports.updateClaimByAdmin = catchAsyncErrors(async (req, res, next) => {
 exports.deleteClaimByAdmin = catchAsyncErrors(async (req, res, next) => {
     try {
         const { id } = req.params;
+        const existingClaim = await Claims.findById(id);
+        if (existingClaim.billPhoto) {
+            await deleteImage(existingClaim.billPhoto);
+        }
+
         const deletedClaim = await Claims.findByIdAndDelete(id);
 
         if (!deletedClaim) {
             return next(new ErrorHandler("Claim not found", 404));
         }
-
-        return sendResponse(res, true, 200, "Claim deleted successfully", deletedClaim);
+        
+        res.status(200).json({ status: true, message: 'Claim deleted successfully', data: deletedClaim });
     } catch (error) {
         return next(new ErrorHandler(error.message, 500));
     }
 });
+
+exports.changeStatusClaimByAdmin = catchAsyncErrors(async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+        const updatedClaim = await Claims.findByIdAndUpdate(id, { status }, {
+            new: true,
+            runValidators: true,
+        });
+        res.status(200).json({ status: true, message: 'Claim updated successfully', data: updatedClaim });
+    } catch (error) {
+        return next(new ErrorHandler(error.message, 500));
+    }
+})

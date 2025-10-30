@@ -22,6 +22,7 @@ export default function UsersPage() {
     const storedUser = sessionStorage.getItem('user');
     return storedUser ? JSON.parse(storedUser) : null;
   });
+
   const { showToast, ToastContainer } = useToast();
   const [activeTab, setActiveTab] = useState(user?.role === 'distributor' ? 'retailer' : 'distributor');
   const [searchTerm, setSearchTerm] = useState('');
@@ -37,17 +38,30 @@ export default function UsersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10); // [pageSize]
   const [data, setData] = useState([]);
+  const [rolePermissions, setRolePermissions] = useState([]);
   // Mock data
   const [distributors, setDistributors] = useState(data.filter(user => user?.role === 'distributor'));
   const [retailers, setRetailers] = useState(data.filter(user => user?.role === 'retailer'));
 
-  // Filter retailers for distributors to only show their assigned retailers
-  const getFilteredRetailers = () => {
-    if (user?.role === 'distributor') {
-      return retailers.filter(retailer => retailer.distributorId === user.id);
-    }
-    return retailers;
-  };
+  const [canRead, canWrite, canEdit, canDelete] = (() => {
+    // Default admin/distributor/retailer logic
+    if (['admin'].includes(user?.role)) return [true, true, true, true];
+    if (['distributor'].includes(user?.role)) return [true, true, true, true];
+    if (['retailer'].includes(user?.role)) return [false, false, false, false];
+
+    // Dynamic staff role permissions
+    const modulePerm = rolePermissions?.find(
+      (m) => m.module === 'User Management'
+    );
+    if (!modulePerm) return [false, false, false, false];
+
+    return [
+      modulePerm.permissions.includes('read'),
+      modulePerm.permissions.includes('write'),
+      modulePerm.permissions.includes('edit'),
+      modulePerm.permissions.includes('delete'),
+    ];
+  })();
 
   const fetchAdminData = async () => {
     try {
@@ -135,19 +149,27 @@ export default function UsersPage() {
     }
   };
 
+  const fetchUserRoleData = async () => {
+    try {
+      const response = await getData(`api/admin/get-admin-users-by-id/${user?.id}`);
+      console.log('response==>getAdminUsersByAdmin', response)
+      if (response?.status) {
+        // setUsersData(response.data.role);
+        setRolePermissions(response.data?.staffRole?.permissions);
+      } else {
+        console.warn('Failed to fetch admin users:', response.message);
+      }
+    } catch (error) {
+      console.error('Error fetching admin users:', error);
+    }
+  }
   useEffect(() => {
     fetchDistributorData();
+    fetchUserRoleData();
   }, []);
 
 
 
-  // Filter data
-  // const filteredData = currentData.filter(item => {
-  //   const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     item.email.toLowerCase().includes(searchTerm.toLowerCase());
-  //   const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
-  //   return matchesSearch && matchesStatus;
-  // });
 
   const distributorFields = [
     { name: 'name', label: 'Company Name', type: 'text', required: true },
@@ -171,7 +193,7 @@ export default function UsersPage() {
     { name: 'password', label: 'Password', type: 'password', required: !editingUser },
     { name: 'address', label: 'Address', type: 'textarea', required: false },
     { name: 'dateOfJoining', label: 'Date of Joining', type: 'date', required: true },
-    ...(user?.role === 'admin' ? [{
+    ...(user?.role !== 'distributor' && user?.role !== 'retailer' ? [{
       name: 'DistributorId', label: 'Assigned Distributor', type: 'select', required: true, options:
         distributors.filter(d => d.status === 'active')
     }] : []),
@@ -207,7 +229,7 @@ export default function UsersPage() {
     { key: 'email', title: 'Email', sortable: true },
     { key: 'phone', title: 'Mobile' },
     { key: 'dateOfJoining', title: 'Date of Joining', render: (value) => new Date(value).toLocaleDateString('en-IN') },
-    ...(user?.role === 'admin' ? [{ key: 'DistributorId', title: 'Distributor', sortable: true }] : []),
+    ...(user?.role !== 'distributor' && user?.role !== 'retailer' ? [{ key: 'DistributorId', title: 'Distributor', sortable: true }] : []),
     { key: 'totalAMCs', title: 'Total AMCs', render: (value) => value || 0 },
     { key: 'walletBalance', title: 'Wallet Balance', render: (value) => `₹${value.toLocaleString()}` },
     {
@@ -324,20 +346,20 @@ export default function UsersPage() {
 
   const renderActions = (record) => (
     <div className="flex space-x-2">
-      <Button
+      {canEdit && <Button
         size="sm"
         variant="ghost"
         onClick={() => handleEdit(record)}
       >
         <i className="ri-edit-line w-4 h-4 flex items-center justify-center"></i>
-      </Button>
-      <Button
+      </Button>}
+      {canDelete && <Button
         size="sm"
         variant="ghost"
         onClick={() => handleDelete(record)}
       >
         <i className="ri-delete-bin-line w-4 h-4 flex items-center justify-center text-red-600"></i>
-      </Button>
+      </Button>}
     </div>
   );
 
@@ -353,23 +375,22 @@ export default function UsersPage() {
       </div>
     );
   }
-
   return (
     <div className="p-6 space-y-6">
       <ToastContainer />
 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-        <Button onClick={handleAdd}>
+        {canWrite && <Button onClick={handleAdd}>
           <i className="ri-add-line mr-2 w-4 h-4 flex items-center justify-center"></i>
           Add {activeTab === 'distributor' ? 'Distributor' : 'Retailer'}
-        </Button>
+        </Button>}
       </div>
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
-          {user?.role === 'admin' && (
+          {user?.role !== 'distributor' && user?.role !== 'retailer' && (
             <button
               onClick={() => setActiveTab('distributor')}
               className={`py-2 px-1 border-b-2 font-medium text-sm whitespace-nowrap cursor-pointer ${activeTab === 'distributor'
@@ -424,7 +445,7 @@ export default function UsersPage() {
       <DataTable
         data={data}
         columns={activeTab === 'distributor' ? distributorColumns : retailerColumns}
-        actions={renderActions}
+        actions={canEdit === true || canDelete === true ? renderActions : ''}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
         totalPages={page}

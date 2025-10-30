@@ -31,7 +31,8 @@ exports.getAllAmcTotal = catchAsyncErrors(async (req, res, next) => {
 
         // 🧩 Build filter
         const filter = {};
-        if (userId && role !== "admin") {
+        if (userId && role === "distributor" || role === "retailer") {
+            console.log("userIda:===>", userId, "role:", role);
             if (role === "distributor") {
                 filter.distributorId = userId;
             } else if (role === "retailer") {
@@ -39,7 +40,7 @@ exports.getAllAmcTotal = catchAsyncErrors(async (req, res, next) => {
             }
         }
 
-        if (createdBy?.email && role !== "admin") {
+        if (createdBy?.email && role === "distributor" || role === "retailer") {
             filter["createdByEmail.email"] = createdBy.email;
         }
 
@@ -61,8 +62,7 @@ exports.getAllAmcTotal = catchAsyncErrors(async (req, res, next) => {
         });
 
         const totalDistributors = await SuperAdmin.countDocuments({ ...filter, role: "distributor" });
-        const totalRetailers = role === "distributor" ?
-            await SuperAdmin.countDocuments({ 'createdByEmail.email': createdBy?.email, role: "retailer" }) :
+        const totalRetailers = role === "distributor" ? await SuperAdmin.countDocuments({ 'createdByEmail.email': createdBy?.email, role: "retailer" }) :
             await SuperAdmin.countDocuments({ ...filter, role: "retailer" });
 
         const usersTransactions = await Transactions.find({ "createdByEmail.email": createdBy?.email, type: 'debit' })

@@ -53,12 +53,21 @@ export default function SchemaForm({
     let data = {};
     if (activeTab === 'retailer') {
 
-      const u = distributors.find((d) => d.name === formData.DistributorId);
+      const u = distributors.find((d) => d.name === formData?.DistributorId);
       // console.log('JSON.stringify( u.email)==>', u.email ,u.name)
-      user.role = 'admin' ? data = { ...formData, role: activeTab, createdByEmail: { name: u?.name, email: u?.email }, admin: { name: user?.name, email: user?.email } }
-        : data = { ...formData, role: activeTab, createdByEmail: { name: user?.name, email: user?.email } }
+      if (user.role === 'admin') {
+        if (formData.DistributorId) {
+          data = { ...formData, role: activeTab, createdByEmail: { name: u?.name, email: u?.email }, admin: { name: user?.name, email: user?.email } }
+        } else {
+          data = { ...formData, role: activeTab, DistributorId: user?.name, createdByEmail: { name: user?.name, email: user?.email }, admin: { name: user?.name, email: user?.email } }
+        }
+
+      } else if (user.role === 'distributor') {
+        data = { ...formData, role: activeTab, DistributorId: user?.name, createdByEmail: { name: user?.name, email: user?.email } }
+      }
 
     } else {
+
       data = { ...formData, role: user?.role === 'distributor' ? 'retailer' : activeTab || '', DistributorId: user?.name, createdByEmail: { name: user?.name, email: user?.email } }
     }
     console.log("SSSSSSSS:==>SSSSSSSS:==>", data)

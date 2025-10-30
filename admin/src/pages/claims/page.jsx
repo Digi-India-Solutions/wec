@@ -9,7 +9,7 @@ import ConfirmDialog from '../../components/base/ConfirmDialog';
 import Input from '../../components/base/Input';
 import { useToast } from '../../components/base/Toast';
 import { mockClaims } from '../../mocks/claims';
-import { getData } from '../../services/FetchNodeServices';
+import { getData, postData } from '../../services/FetchNodeServices';
 
 
 
@@ -32,15 +32,28 @@ export default function ClaimsPage() {
   const [loading, setLoading] = useState(false);
   const [claims, setClaims] = useState(mockClaims);
   const [filter, setFilter] = useState({});
+  const [rolePermissions, setRolePermissions] = useState([]);
 
-  // Filter data
-  // const filteredData = claims.filter(item => {
-  //   const matchesSearch = item.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     item.amcNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-  //     item.claimId.toLowerCase().includes(searchTerm.toLowerCase());
-  //   const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
-  //   return matchesSearch && matchesStatus;
-  // });
+  const [canRead, canWrite, canEdit, canDelete] = (() => {
+    // Default admin/distributor/retailer logic
+    if (['admin'].includes(user?.role)) return [true, true, true, true];
+    if (['distributor'].includes(user?.role)) return [true, true, true, true];
+    if (['retailer'].includes(user?.role)) return [false, false, false, false];
+
+    // Dynamic staff role permissions
+    const modulePerm = rolePermissions?.find(
+      (m) => m.module === 'Claims Management'
+    );
+    if (!modulePerm) return [false, false, false, false];
+
+    return [
+      modulePerm.permissions.includes('read'),
+      modulePerm.permissions.includes('write'),
+      modulePerm.permissions.includes('edit'),
+      modulePerm.permissions.includes('delete'),
+    ];
+  })();
+
 
   const claimFields = [
     { name: 'customerName', label: 'Customer Name', type: 'text', required: true },
@@ -106,7 +119,7 @@ export default function ClaimsPage() {
         </span>
       )
     },
-    { key: 'createdDate', title: 'Created Date', sortable: true }
+    { key: 'createdAt', title: 'Created Date', sortable: true }
   ];
 
   const handleAdd = () => {
@@ -128,8 +141,14 @@ export default function ClaimsPage() {
     setLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      setClaims(prev => prev.map(c => c.id === claim.id ? { ...c, status: 'approved' } : c));
-      showToast('Claim approved successfully', 'success');
+      const respons = await postData(`api/claims/change-status-claim-by-admin/${claim._id}`, { status: 'approved' });
+      console.log("respons==>", respons);
+      if (respons.status === true) {
+        fetchClaimsData();
+        setClaims(prev => prev.map(c => c._id === claim._id ? { ...c, status: 'approved' } : c));
+        showToast('Claim approved successfully', 'success');
+      }
+
     } catch (error) {
       showToast('Approval failed', 'error');
     } finally {
@@ -141,8 +160,16 @@ export default function ClaimsPage() {
     setLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      setClaims(prev => prev.map(c => c.id === claim.id ? { ...c, status: 'rejected' } : c));
-      showToast('Claim rejected successfully', 'success');
+
+      const respons = await postData(`api/claims/change-status-claim-by-admin/${claim._id}`, { status: 'rejected' });
+      console.log("respons==>", respons);
+      if (respons.status === true) {
+        fetchClaimsData();
+        setClaims(prev => prev.map(c => c._id === claim._id ? { ...c, status: 'rejected' } : c));
+        showToast('Claim rejected successfully', 'success');
+      }
+
+
     } catch (error) {
       showToast('Rejection failed', 'error');
     } finally {
@@ -154,10 +181,18 @@ export default function ClaimsPage() {
     setLoading(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      setClaims(prev => prev.filter(c => c.id !== deletingClaim.id));
-      showToast('Claim deleted successfully', 'success');
-      setIsDeleteDialogOpen(false);
-      setDeletingClaim(null);
+
+      const respons = await getData(`api/claims/delete-claim-by-admin/${deletingClaim._id}`);
+      console.log("respons==>", respons);
+      if (respons.status === true) {
+        fetchClaimsData();
+        setClaims(prev => prev.filter(c => c._id !== deletingClaim._id));
+        showToast('Claim deleted successfully', 'success');
+        setIsDeleteDialogOpen(false);
+        setDeletingClaim(null);
+      }
+
+
     } catch (error) {
       showToast('Delete failed', 'error');
     } finally {
@@ -167,15 +202,15 @@ export default function ClaimsPage() {
 
   const renderActions = (record) => (
     <div className="flex space-x-2">
-      <Button
+      {canEdit && <Button
         size="sm"
         variant="ghost"
         onClick={() => handleEdit(record)}
         title="Edit"
       >
         <i className="ri-edit-line w-4 h-4 flex items-center justify-center"></i>
-      </Button>
-      {record.status === 'pending' && (
+      </Button>}
+      {canEdit && record.status === 'pending' && (
         <>
           <Button
             size="sm"
@@ -197,14 +232,14 @@ export default function ClaimsPage() {
           </Button>
         </>
       )}
-      <Button
+      {canDelete && <Button
         size="sm"
         variant="ghost"
         onClick={() => handleDelete(record)}
         title="Delete"
       >
         <i className="ri-delete-bin-line w-4 h-4 flex items-center justify-center text-red-600"></i>
-      </Button>
+      </Button>}
       <Button
         size="sm"
         variant="ghost"
@@ -229,11 +264,28 @@ export default function ClaimsPage() {
     }
   }
 
+  const fetchUserRoleData = async () => {
+    try {
+      const response = await getData(`api/admin/get-admin-users-by-id/${user?.id}`);
+      console.log('response==>getAdminUsersByAdmin', response)
+      if (response?.status) {
+        // setUsersData(response.data.role);
+        setRolePermissions(response.data?.staffRole?.permissions);
+      } else {
+        console.warn('Failed to fetch admin users:', response.message);
+      }
+    } catch (error) {
+      console.error('Error fetching admin users:', error);
+    }
+  }
+
+
   useEffect(() => {
     fetchClaimsData();
+    fetchUserRoleData()
   }, [searchTerm, statusFilter]);
 
-  if (user?.role !== 'admin') {
+  if (user?.role === 'distributor' || user?.role === 'retailer') {
     return (
       <div className="p-6">
         <div className="text-center py-12">
@@ -251,10 +303,10 @@ export default function ClaimsPage() {
 
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Claims Management</h1>
-        <Button onClick={handleAdd}>
+        {canWrite && <Button onClick={handleAdd}>
           <i className="ri-add-line mr-2 w-4 h-4 flex items-center justify-center"></i>
           Add Claim
-        </Button>
+        </Button>}
       </div>
 
       {/* Stats Cards */}
@@ -338,7 +390,7 @@ export default function ClaimsPage() {
       <DataTable
         data={claims}
         columns={columns}
-        actions={renderActions}
+        actions={canEdit === true || canDelete === true ? renderActions : ''}
       />
 
       {/* Add/Edit Modal */}
@@ -351,6 +403,7 @@ export default function ClaimsPage() {
         <SchemaForm
           fields={claimFields}
           initialData={editingClaim || {}}
+          editingUser={editingClaim}
           setIsModalOpen={setIsModalOpen}
           onCancel={() => setIsModalOpen(false)}
           loading={loading}

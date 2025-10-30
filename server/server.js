@@ -22,6 +22,7 @@ const typeRoutes = require("./src/category/type/type-routes");
 const amcsRoutes = require("./src/amcs/amcs-routes");
 const transactionRoutes = require("./src/transaction/transaction-routes");
 const dashboardRoutes = require("./src/dashboard/dashboard-routes");
+const roleRoutes = require("./src/adminRole/adminRole-routes");
 // const usersRoutes = require("./src/users/users-routes");
 
 
@@ -33,6 +34,8 @@ app.use("/api/type", typeRoutes)
 app.use("/api/amcs", amcsRoutes);
 app.use("/api/transaction", transactionRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/role", roleRoutes);
+
 // app.use("/api/user", usersRoutes);
 
 const connectDatabase = require("./db/database");

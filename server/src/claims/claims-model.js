@@ -3,6 +3,7 @@ const { Schema } = mongoose;
 
 const claimsSchema = new Schema(
     {
+        claimId: { type: String, },
         createdByEmail: {
             name: { type: String, },
             email: { type: String, }
