@@ -116,7 +116,7 @@ export default function ProductsPage() {
       case 'categories':
         return [
           ...baseFields,
-          { name: 'description', label: 'Description', type: 'textarea' }
+          // { name: 'description', label: 'Description', type: 'textarea' }
         ];
       case 'brands':
         return [
@@ -172,7 +172,7 @@ export default function ProductsPage() {
       case 'categories':
         return [
           ...baseColumns,
-          { key: 'description', title: 'Description' }
+          // { key: 'description', title: 'Description' }
         ];
       case 'brands':
         return [
@@ -366,7 +366,7 @@ export default function ProductsPage() {
   const fetchUserRoleData = async () => {
     try {
       const response = await getData(`api/admin/get-admin-users-by-id/${user?.id}`);
-      console.log('response==>getAdminUsersByAdmin', response)
+      // console.log('response==>getAdminUsersByAdmin', response)
       if (response?.status) {
         // setUsersData(response.data.role);
         setRolePermissions(response.data?.staffRole?.permissions);

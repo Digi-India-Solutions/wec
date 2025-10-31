@@ -1,18 +1,16 @@
 
 import { useState } from 'react';
-// import { useAuthStore } from '../../store/authStore';
 import Button from '../../components/base/Button';
 import Input from '../../components/base/Input';
 import { useToast } from '../../components/base/Toast';
 import RoleManagement from './components/RoleManagement';
 import { getData, postData } from '../../services/FetchNodeServices';
+import JoditEditor from 'jodit-react';
+import { useRef } from 'react';
 
 export default function SettingsPage() {
   // const { user } = useAuthStore();
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    sessionStorage.getItem('isAuthenticated') === 'true'
-  );
-
+  const editor = useRef(null);
   const [user, setUser] = useState(() => {
     const storedUser = sessionStorage.getItem('user');
     return storedUser ? JSON.parse(storedUser) : null;
@@ -381,35 +379,6 @@ export default function SettingsPage() {
                 }}
                 icon="ri-percent-line"
               />
-
-              {/* <Input
-                label="Minimum Percentage"
-                type="text"
-                value={amcSettings.minPercentage}
-                min="0"
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '' || (/^\d+$/.test(value) && Number(value) >= 0)) {
-                    setAmcSettings(prev => ({ ...prev, minPercentage: value }))
-                  }
-                }}
-                icon="ri-arrow-down-line"
-              />
-
-              <Input
-                label="Maximum Percentage"
-                type="text"
-                value={amcSettings.maxPercentage}
-                min="0"
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === '' || (/^\d+$/.test(value) && Number(value) >= 0)) {
-                    setAmcSettings(prev => ({ ...prev, maxPercentage: value }))
-                  }
-                }}
-                icon="ri-arrow-up-line"
-              /> */}
-
               <Input
                 label="Default Duration (Months)"
                 type="text"
@@ -427,12 +396,27 @@ export default function SettingsPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Terms & Conditions</label>
-              <textarea
+              <JoditEditor
+                ref={editor}
                 value={amcSettings.termsAndConditions}
-                onChange={(e) => setAmcSettings(prev => ({ ...prev, termsAndConditions: e.target.value }))}
-                rows={12}
-                className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                placeholder="Enter default terms and conditions for AMC contracts..."
+                config={{
+                  readonly: false,
+                  height: 400,
+                  placeholder: 'Enter default terms and conditions for AMC contracts...',
+                  toolbarAdaptive: false,
+                  toolbarSticky: false,
+                  buttons: [
+                    'bold', 'italic', 'underline', 'strikethrough', '|', 'ul', 'ol', '|',
+                    'link', 'table', '|', 'left', 'center', 'right', 'justify',
+                    '|', 'undo', 'redo', '|', 'hr', 'eraser', 'source'
+                  ]
+                }}
+                onBlur={(newContent) =>
+                  setAmcSettings((prev) => ({
+                    ...prev,
+                    termsAndConditions: newContent
+                  }))
+                }
               />
               <p className="text-xs text-gray-500 mt-1">These terms will be included in all AMC certificates</p>
             </div>

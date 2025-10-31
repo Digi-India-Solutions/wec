@@ -172,12 +172,13 @@ export default function UsersPage() {
 
 
   const distributorFields = [
+    { name: 'ownerName', label: 'Owner Name', type: 'text', required: true },
     { name: 'name', label: 'Company Name', type: 'text', required: true },
     { name: 'email', label: 'Email', type: 'email', required: true },
     { name: 'phone', label: 'Mobile', type: 'number', required: true },
     { name: 'password', label: 'Password', type: 'password', required: !editingUser },
     { name: 'address', label: 'Address', type: 'textarea', required: true },
-    { name: 'dateOfJoining', label: 'Date of Joining', type: 'date', required: true },
+    { name: 'gst', label: 'GST', type: 'text', required: false },
     {
       name: 'status', label: 'Status', type: 'select', required: true, options: [
         { value: 'active', label: 'Active' },
@@ -187,12 +188,13 @@ export default function UsersPage() {
   ];
 
   const retailerFields = [
+    { name: 'ownerName', label: 'Owner Name', type: 'text', required: true },
     { name: 'name', label: 'Store Name', type: 'text', required: true },
     { name: 'email', label: 'Email', type: 'email', required: true },
     { name: 'phone', label: 'Mobile', type: 'number', required: true },
     { name: 'password', label: 'Password', type: 'password', required: !editingUser },
     { name: 'address', label: 'Address', type: 'textarea', required: false },
-    { name: 'dateOfJoining', label: 'Date of Joining', type: 'date', required: true },
+    { name: 'gst', label: 'GST', type: 'text', required: false },
     ...(user?.role !== 'distributor' && user?.role !== 'retailer' ? [{
       name: 'DistributorId', label: 'Assigned Distributor', type: 'select', required: true, options:
         distributors.filter(d => d.status === 'active')
@@ -210,7 +212,7 @@ export default function UsersPage() {
     { key: 'name', title: 'Company Name', sortable: true },
     { key: 'email', title: 'Email', sortable: true },
     { key: 'phone', title: 'Mobile' },
-    { key: 'dateOfJoining', title: 'Date of Joining', render: (value) => new Date(value).toLocaleDateString('en-IN') },
+    { key: 'createdAt', title: 'Date of Joining', render: (value) => new Date(value).toLocaleDateString('en-IN') },
     { key: 'totalRetailers', title: 'Retailers', render: (value) => value || 0 },
     { key: 'totalAMCs', title: 'Total AMCs', render: (value) => value || 0 },
     { key: 'walletBalance', title: 'Wallet Balance', render: (value) => `₹${value.toLocaleString()}` },
@@ -228,7 +230,7 @@ export default function UsersPage() {
     { key: 'name', title: 'Store Name', sortable: true },
     { key: 'email', title: 'Email', sortable: true },
     { key: 'phone', title: 'Mobile' },
-    { key: 'dateOfJoining', title: 'Date of Joining', render: (value) => new Date(value).toLocaleDateString('en-IN') },
+    { key: 'createdAt', title: 'Date of Joining', render: (value) => new Date(value).toLocaleDateString('en-IN') },
     ...(user?.role !== 'distributor' && user?.role !== 'retailer' ? [{ key: 'DistributorId', title: 'Distributor', sortable: true }] : []),
     { key: 'totalAMCs', title: 'Total AMCs', render: (value) => value || 0 },
     { key: 'walletBalance', title: 'Wallet Balance', render: (value) => `₹${value.toLocaleString()}` },

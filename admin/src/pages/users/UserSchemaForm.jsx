@@ -25,6 +25,7 @@ export default function SchemaForm({
   const [formData, setFormData] = useState(initialData);
   const [errors, setErrors] = useState({});
   const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+  const [showPassword, setShowPassword] = useState(false);
   const handleChange = (name, value) => {
     // console.log("SSSSSSSS:==>", name, value)
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -204,20 +205,53 @@ export default function SchemaForm({
 
       default:
         return (
+          //   <div key={field.name} className="space-y-1">
+          //     <label className="block text-sm font-medium text-gray-700">
+          //       {field.label} {field.required && <span className="text-red-500">*</span>}
+          //     </label>
+          //     <input
+          //      type={field.type === 'password' ? (showPassword ? 'text' : 'password') : field.type}
+          // // type={field.type}
+          //       value={value}
+          //       onChange={(e) => handleChange(field.name, e.target.value)}
+          //       className={`block w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${error
+          //         ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+          //         : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+          //         }`}
+          //       placeholder={`Enter ${field.label.toLowerCase()}`}
+          //     />
+          //     {error && <p className="text-sm text-red-600">{error}</p>}
+          //   </div>
           <div key={field.name} className="space-y-1">
             <label className="block text-sm font-medium text-gray-700">
               {field.label} {field.required && <span className="text-red-500">*</span>}
             </label>
-            <input
-              type={field.type}
-              value={value}
-              onChange={(e) => handleChange(field.name, e.target.value)}
-              className={`block w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 ${error
-                ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
-                }`}
-              placeholder={`Enter ${field.label.toLowerCase()}`}
-            />
+
+            <div className="relative">
+              <input
+                type={field.type === 'password' ? (showPassword ? 'text' : 'password') : field.type}
+                value={value}
+                onChange={(e) => handleChange(field.name, e.target.value)}
+                className={`block w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-1 pr-10 ${error
+                  ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                  : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'
+                  }`}
+                placeholder={`Enter ${field.label.toLowerCase()}`}
+              />
+
+              {field.type === 'password' && (
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 focus:outline-none"
+                >
+                  <i
+                    className={`ri-${showPassword ? 'eye-off-line' : 'eye-line'} text-lg`}
+                  ></i>
+                </button>
+              )}
+            </div>
+
             {error && <p className="text-sm text-red-600">{error}</p>}
           </div>
         );

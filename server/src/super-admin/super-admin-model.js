@@ -3,6 +3,11 @@ const { Schema } = mongoose;
 const jwt = require("jsonwebtoken");
 
 const superAdminSchema = new Schema({
+    ownerName: {
+        type: String,
+        trim: true,
+        default: "",
+    },
     name: {
         type: String,
         trim: true,
@@ -42,6 +47,11 @@ const superAdminSchema = new Schema({
         default: ""
     },
     phone: {
+        type: String,
+        trim: true,
+        default: "",
+    },
+    gst: {
         type: String,
         trim: true,
         default: "",

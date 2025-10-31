@@ -182,7 +182,7 @@ exports.createAmcByAdmin = catchAsyncErrors(async (req, res, next) => {
 // ✅ Get AMC with pagination + search + status filter
 exports.getAmcByAdminWithPagination = catchAsyncErrors(async (req, res, next) => {
     try {
-        let { page = 1, limit = 10, search = "", status = "" } = req.query;
+        let { page = 1, limit = 10, search = "", status = "", category = "" } = req.query;
         page = Math.max(1, parseInt(page, 10));
         limit = Math.max(1, parseInt(limit, 10));
 
@@ -190,6 +190,10 @@ exports.getAmcByAdminWithPagination = catchAsyncErrors(async (req, res, next) =>
 
         if (status && status !== "all") {
             filter.status = new RegExp(`^${status}$`, "i");
+        }
+        if (category && category.toLowerCase() !== "all") {
+            const searchRegex = new RegExp(category.trim(), "i");
+            filter.productCategory = category || searchRegex;
         }
 
         if (search && search.trim() !== "") {
@@ -200,6 +204,8 @@ exports.getAmcByAdminWithPagination = catchAsyncErrors(async (req, res, next) =>
                 { customerEmail: searchRegex },
                 { customerMobile: searchRegex },
                 { productCategory: searchRegex },
+                { distributorName: searchRegex },
+                { retailerName: searchRegex },
             ];
         }
 
@@ -337,7 +343,8 @@ exports.getAmcByDistributorWithPagination = catchAsyncErrors(async (req, res, ne
         }
 
         if (category && category.toLowerCase() !== "all") {
-            filter.productCategory = category;
+            const searchRegex = new RegExp(category.trim(), "i");
+            filter.productCategory = searchRegex;
         }
 
         // ✅ Add search filter
@@ -351,6 +358,7 @@ exports.getAmcByDistributorWithPagination = catchAsyncErrors(async (req, res, ne
                 { productCategory: searchRegex },
                 { productBrand: searchRegex },
                 { productType: searchRegex },
+                { retailerName: searchRegex },
             ];
         }
 

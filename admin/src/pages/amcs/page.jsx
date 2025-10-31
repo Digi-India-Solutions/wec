@@ -48,9 +48,10 @@ export default function AMCsPage() {
   const [allCategories, setAllCategories] = useState([]);
   const [allBrands, setAllBrands] = useState([]);
   const [allTypes, setAllTypes] = useState([]);
+  const [teamAndConditions, setSetTeamAndConditions] = useState('');
   // Mock data
   const [amcs, setAmcs] = useState(mockAMCs);
- 
+
 
   // Filter AMCs based on user role
   const getUserAMCs = () => {
@@ -83,6 +84,7 @@ export default function AMCsPage() {
     { name: 'productPicture', label: 'Upload Product Picture', type: 'file', required: false, accept: '.pdf,.jpg,.jpeg,.png' },
     { name: 'purchaseProof', label: 'Upload Purchase Proof', type: 'file', required: false, accept: '.pdf,.jpg,.jpeg,.png' },
     { name: 'serialNumber', label: 'Serial / IMEI Number', type: 'text', required: true },
+    { name: 'gst', label: 'GST Number', type: 'text', required: false },
   ];
 
   const columns = [
@@ -118,7 +120,8 @@ export default function AMCsPage() {
       { key: 'distributorName', title: 'Distributor' }
     );
   } else if (user?.role === 'distributor') {
-    columns.splice(-1, 0, { key: 'retailerName', title: 'Retailer' });
+    columns.splice(-1, 0, { key: 'retailerName', title: 'Retailer' }, { key: 'distributorName', title: 'Distributor' });
+
   } else if (user?.role !== 'retailer' && user?.role !== 'distributor') {
     columns.splice(-1, 0,
       { key: 'retailerName', title: 'Retailer' },
@@ -196,7 +199,7 @@ export default function AMCsPage() {
         amcAmount: calculateAMCAmount(),
         purchaseProof: formData.purchaseProof || `purchase_proof_${Date.now()}.pdf`,
         startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1) - 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         status: 'active',
         retailerId: user?.role === 'retailer' ? user.id : '',
         retailerName: user?.role === 'retailer' ? user.name : '',
@@ -204,7 +207,7 @@ export default function AMCsPage() {
         distributorName: user?.role === 'distributor' ? user.name : '',
         createdDate: new Date().toISOString().split('T')[0],
         renewalCount: 0,
-        lastServiceDate: null
+        lastServiceDate: null,
       };
       console.log("newAMC==>newAMC==>", newAMC)
       const formDataToSend = new FormData();
@@ -218,6 +221,7 @@ export default function AMCsPage() {
       formDataToSend.append("retailerName", newAMC?.retailerName || ""); formDataToSend.append("distributorId", newAMC?.distributorId || ""); formDataToSend.append("distributorName", newAMC?.distributorName || "");
       formDataToSend.append("createdDate", newAMC?.createdDate || ""); formDataToSend.append("renewalCount", newAMC?.renewalCount || 0); formDataToSend.append("lastServiceDate", newAMC?.lastServiceDate || "");
       formDataToSend.append("categoryId", newAMC?.categoryId || ""); formDataToSend.append("brandId", newAMC?.brandId || ""); formDataToSend.append("typeId", newAMC?.typeId || ""); formDataToSend.append("userId", user.id || "");
+      formDataToSend.append("gst", newAMC?.gst || "");
       // ✅ Append purchase proof image only if provided
       if (newAMC?.purchaseProof) {
         formDataToSend.append("purchaseProof", newAMC.purchaseProof);
@@ -256,7 +260,7 @@ export default function AMCsPage() {
       >
         <i className="ri-eye-line w-4 h-4 flex items-center justify-center"></i>
       </Button>
-      { (record.status === 'expired' || record.status === 'expiring') && (
+      {(record.status === 'expired' || record.status === 'expiring') && (
         <Button
           size="sm"
           onClick={() => handleRenew(record)}
@@ -276,7 +280,7 @@ export default function AMCsPage() {
   );
 
   /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+  // console.log("amcs==>", teamAndConditions.termsAndConditions)
   const handleDownloadPDf = (record) => {
     const doc = new jsPDF();
     const editingAMC = record;
@@ -370,10 +374,7 @@ export default function AMCsPage() {
     doc.setFont(undefined, 'normal');
 
     const terms = [
-      'This WEC covers manufacturing defects only, as per company policy.',
-      'Warranty service to be availed through authorized service centers only.',
-      'Any damage due to misuse, accident, or unauthorized repair voids the contract.',
-      'Keep this document and invoice as proof of extended warranty.'
+      teamAndConditions?.termsAndConditions?.replace(/<[^>]+>/g, '')?.replace(/\n/g, ' ')?.trim()
     ];
 
     let currentY = termsY + 6;
@@ -441,10 +442,23 @@ export default function AMCsPage() {
     }
   }
 
+  const fetchTeamAndConditions = async () => {
+    try {
+      const response = await getData('api/company/get-AMC-settings');
+      console.log("response==>get-team-and-conditions=>", response)
+      if (response?.status === true) {
+        setSetTeamAndConditions(response?.data);
+      }
+    } catch (error) {
+      console.error('Error fetching team and conditions:', error);
+    }
+  }
+
+
   useEffect(() => {
     fetchAMCs()
     fetchAllCategories();
-    
+    fetchTeamAndConditions();
   }, [currentPage, pageSize, searchTerm, statusFilter, categoryFilter]);
 
   const fetchAllBrandsByCategory = async () => {
@@ -578,8 +592,8 @@ export default function AMCsPage() {
               className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 pr-8"
             >
               <option value="all">All Categories</option>
-              {mockCategories.map(category => (
-                <option key={category?._id} value={category.name}>{category.name}</option>
+              {allCategories.map(category => (
+                <option key={category?._id} value={category?.name}>{category?.name}</option>
               ))}
             </select>
             <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -626,10 +640,50 @@ export default function AMCsPage() {
                     <label className="text-sm font-medium text-gray-600">Mobile</label>
                     <p className="text-gray-900">{editingAMC.customerMobile}</p>
                   </div>
+                  {editingAMC?.productPicture && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Product Picture</label>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                          <i className="ri-file-line text-blue-600 w-4 h-4 flex items-center justify-center"></i>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            try {
+                              // 🧠 Force Cloudinary to download by adding `fl_attachment` to the URL
+                              let downloadUrl = editingAMC.productPicture;
+
+                              if (downloadUrl.includes("/upload/")) {
+                                downloadUrl = downloadUrl.replace("/upload/", "/upload/fl_attachment/");
+                              }
+
+                              // Create and trigger a temporary link
+                              const link = document.createElement("a");
+                              link.href = downloadUrl;
+                              link.download = editingAMC.purchaseProof.split("/").pop() || "purchase-proof";
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+
+                              showToast("File downloaded successfully", "success");
+                            } catch (error) {
+                              console.error("Error downloading image:", error);
+                              showToast("Failed to download file", "error");
+                            }
+                          }}
+                        >
+                          View / Download
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <label className="text-sm font-medium text-gray-600">Address</label>
                     <p className="text-gray-900">{editingAMC.customerAddress}</p>
                   </div>
+
                 </div>
               </div>
 
@@ -656,7 +710,7 @@ export default function AMCsPage() {
                     <label className="text-sm font-medium text-gray-600">AMC Amount ({editingAMC.amcPercentage}%)</label>
                     <p className="text-gray-900 font-semibold">₹{editingAMC.amcAmount.toLocaleString()}</p>
                   </div>
-                  {editingAMC.purchaseProof && (
+                  {editingAMC?.purchaseProof && (
                     <div>
                       <label className="text-sm font-medium text-gray-600">Purchase Proof</label>
                       <div className="flex items-center space-x-2 mt-1">
@@ -695,6 +749,7 @@ export default function AMCsPage() {
                       </div>
                     </div>
                   )}
+
                 </div>
               </div>
             </div>

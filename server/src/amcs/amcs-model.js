@@ -41,7 +41,7 @@ const amcSchema = new Schema(
         amcAmount: { type: Number, required: true },
         startDate: { type: String, required: true },
         endDate: { type: String, required: true },
-
+        gst: { type: String },
         status: { type: String, default: "active" },
         retailerId: {
             type: mongoose.Schema.Types.ObjectId,
