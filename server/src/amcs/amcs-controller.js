@@ -27,7 +27,7 @@ exports.createAmcByAdmin = catchAsyncErrors(async (req, res, next) => {
             return next(new ErrorHandler("User not found", 404));
         }
 
-        if (user.walletBalance < amcAmount) {
+        if (user?.walletBalance < amcAmount) {
             return res.status(200).json({ status: false, massage: "Insufficient wallet balance please add amount" });
         }
         // ✅ Prepare transaction object
@@ -125,9 +125,9 @@ exports.createAmcByAdmin = catchAsyncErrors(async (req, res, next) => {
             createdAt: new Date(),
         });
 
-        // ✅ Update user’s wallet balance
-        user.walletBalance = (user.walletBalance || 0) - Number(amcAmount);
-        await user.save();
+        // // ✅ Update user’s wallet balance
+        // user.walletBalance = (user.walletBalance || 0) - Number(amcAmount);
+        // await user.save();
 
         // ✅ Respond success
 

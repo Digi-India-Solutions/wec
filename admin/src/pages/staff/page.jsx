@@ -451,7 +451,7 @@ export default function StaffPage() {
             </div>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
+        {/* <div className="bg-white p-6 rounded-lg shadow">
           <div className="flex items-center">
             <div className="p-2 bg-yellow-100 rounded-lg">
               <i className="ri-user-settings-line text-yellow-600 w-6 h-6 flex items-center justify-center"></i>
@@ -472,7 +472,7 @@ export default function StaffPage() {
               <p className="text-2xl font-semibold text-gray-900">{staff.filter(s => s.role === 'support').length}</p>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Filters */}

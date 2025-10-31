@@ -187,6 +187,7 @@ export default function WalletPage() {
       console.log("newTransactionnewTransaction:==>", selectedUser);
       // Add transaction record
       const newTransaction = {
+        role: user.role,
         id: Date.now().toString(),
         userId: selectedUser._id,
         userType: selectedUser.role,
@@ -207,6 +208,10 @@ export default function WalletPage() {
       if (response?.status === true) {
         setTransactions(prev => [newTransaction, ...prev]);
         showToast(`₹${finalAmount.toLocaleString()} ${transactionType === 'credit' ? 'credited to' : 'debited from'} ${selectedUser.name}`, 'success');
+        setIsCreditModalOpen(false);
+        setSelectedUser(null);
+      } else {
+        showToast(`${response?.massage || 'Failed'}`, 'error');
         setIsCreditModalOpen(false);
         setSelectedUser(null);
       }

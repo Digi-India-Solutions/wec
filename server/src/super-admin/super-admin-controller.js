@@ -266,7 +266,7 @@ exports.getAdminUsersByAdminwithPagination = catchAsyncErrors(async (req, res, n
 
         // Count total documents matching filters
         const total = await SuperAdmin.countDocuments(filter);
-
+        const totalRetailers = await SuperAdmin.countDocuments({ role: 'retailer' });
         // Pagination skip calculation
         const skip = (page - 1) * limit;
 
@@ -295,6 +295,7 @@ exports.getAdminUsersByAdminwithPagination = catchAsyncErrors(async (req, res, n
             data: users,
             pagination: {
                 total,
+                totalRetailers,
                 totalPages,
                 currentPage: page,
                 pageSize: limit,

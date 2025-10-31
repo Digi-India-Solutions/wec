@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../components/base/Button';
 import Input from '../../components/base/Input';
 import { useToast } from '../../components/base/Toast';
-import { postData } from '../../services/FetchNodeServices';
+import { getData, postData } from '../../services/FetchNodeServices';
 import ForgotPasswordCom from './ForgotPassword';
 
 export default function Login() {
@@ -19,6 +19,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false); // 👁️ toggle state
   const [forgotPassword, setForgotPassword] = useState(false);
+  const [companySettings, setCompanySettings] = useState({});
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,6 +48,26 @@ export default function Login() {
     }
   };
 
+  const fetchCompanySettings = async () => {
+    try {
+      const response = await getData(`api/company/get-company-settings`);
+      const respons2 = await getData(`api/company/get-AMC-settings`);
+
+      if (response.status === true) {
+        setCompanySettings(response.data);
+        sessionStorage.setItem('companySettings', JSON.stringify(response?.data));
+      }
+      // if (respons2.status === true) {
+      //   setAmcSettings(respons2.data);
+      // }
+    } catch (error) {
+      console.error('Error fetching company settings:', error);
+    }
+  }
+  useEffect(() => {
+    fetchCompanySettings();
+  }, []);
+
   return (<>{
     forgotPassword ?
       <ForgotPasswordCom emails={formData?.email} />
@@ -56,9 +77,13 @@ export default function Login() {
           {/* Logo / Title */}
           <div className="text-center">
             <div className="mx-auto h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center">
-              <i className="ri-file-shield-line text-white text-2xl w-8 h-8 flex items-center justify-center"></i>
+              {
+                companySettings?.logo ? <img src={companySettings?.logo} alt="Logo" className="w-15 h-15 " style={{ borderRadius: 50 }} /> :
+                  <i className="ri-file-shield-line text-white text-2xl w-8 h-8 flex items-center justify-center"></i>
+              }
+
             </div>
-            <h2 className="mt-6 text-3xl font-bold text-gray-900">AMC Management System</h2>
+            <h2 className="mt-6 text-3xl font-bold text-gray-900">{companySettings?.name ? companySettings?.name : 'AMC Management System'}</h2>
             <p className="mt-2 text-sm text-gray-600">Sign in to your account</p>
           </div>
 

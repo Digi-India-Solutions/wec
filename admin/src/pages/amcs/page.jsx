@@ -489,8 +489,8 @@ export default function AMCsPage() {
     fetchAllTypesByBrand();
   }, [selectedCategory, selectedBrand, selectedType]);
 
-  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  
   return (
     <div className="p-6 space-y-6">
       <ToastContainer />
@@ -645,7 +645,7 @@ export default function AMCsPage() {
                       <label className="text-sm font-medium text-gray-600">Product Picture</label>
                       <div className="flex items-center space-x-2 mt-1">
                         <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
-                          <i className="ri-file-line text-blue-600 w-4 h-4 flex items-center justify-center"></i>
+                         {editingAMC?.productPicture?<img src={editingAMC?.productPicture} alt="Product Picture" className="w-full h-full object-cover rounded" />:  <i className="ri-file-line text-blue-600 w-4 h-4 flex items-center justify-center"></i>}
                         </div>
                         <Button
                           size="sm"
@@ -715,7 +715,9 @@ export default function AMCsPage() {
                       <label className="text-sm font-medium text-gray-600">Purchase Proof</label>
                       <div className="flex items-center space-x-2 mt-1">
                         <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
-                          <i className="ri-file-line text-blue-600 w-4 h-4 flex items-center justify-center"></i>
+                          {editingAMC?.purchaseProof?<img src={editingAMC?.purchaseProof} alt="Purchase Proof" className="w-full h-full object-cover rounded" />:  <i className="ri-file-line text-blue-600 w-4 h-4 flex items-center justify-center"></i>}
+                       
+                       {/* <i className="ri-file-line text-blue-600 w-4 h-4 flex items-center justify-center"></i> */}
                         </div>
                         <Button
                           size="sm"

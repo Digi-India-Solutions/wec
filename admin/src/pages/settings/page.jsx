@@ -149,7 +149,7 @@ export default function SettingsPage() {
   }, []);
 
 
-  if (user?.role !== 'admin') {
+  if (user?.role === 'distributor' || user?.role === 'retailer') {
     return (
       <div className="p-6">
         <div className="text-center py-12">

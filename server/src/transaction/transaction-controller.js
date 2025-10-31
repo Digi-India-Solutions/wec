@@ -16,6 +16,12 @@ exports.createTransactionByAdmin = catchAsyncErrors(async (req, res, next) => {
             return next(new ErrorHandler("User not found", 404));
         }
 
+        if (req.body.role === "distributor" || req.body.role === "retailer") {
+            if (user?.walletBalance < amount) {
+                return res.status(200).json({ status: false, massage: "Insufficient wallet balance please add amount" });
+            }
+        }
+
         // 2️⃣ Determine New Wallet Balance
         let newWalletBalance = user.walletBalance || 0;
 

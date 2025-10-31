@@ -74,19 +74,21 @@ export default function UsersPage() {
       }).toString();
 
       const response = await getData(`api/admin/getAdminUsersByAdminwithPagination?${queryParams}`);
-      console.log('response==>', response)
+      // console.log('response==>', response)
       if (response?.status) {
         if (activeTab === 'distributor') {
           setTotalData(response.pagination.total);
+          setRetailerTotal(response.pagination.totalRetailers)
 
         } else {
           setRetailerTotal(response.pagination.total)
         }
+
         setData(response.data);
         setPage(response.pagination.totalPages);
         setPageSize(response.pagination.pageSize);
         // setTotalData(response.pagination.total);
-        console.log('Fetched Admin Users:', response.data);
+        // console.log('Fetched Admin Users:', response.data);
         // Optionally update state here
       } else {
         console.warn('Failed to fetch admin users:', response.message);
@@ -107,7 +109,7 @@ export default function UsersPage() {
       }).toString();
 
       const response = await getData(`api/admin/getRetailersByAdminwithPagination?${queryParams}`);
-      console.log('response==>', response)
+      // console.log('response==>', response)
       if (response?.status) {
 
         setRetailerTotal(response.pagination.total);
@@ -116,7 +118,7 @@ export default function UsersPage() {
         setPage(response.pagination.totalPages);
         setPageSize(response.pagination.pageSize);
         // setTotalData(response.pagination.total);
-        console.log('Fetched Admin Users:', response.data);
+        // console.log('Fetched Admin Users:', response.data);
         // Optionally update state here
       } else {
         console.warn('Failed to fetch admin users:', response.message);
@@ -152,7 +154,7 @@ export default function UsersPage() {
   const fetchUserRoleData = async () => {
     try {
       const response = await getData(`api/admin/get-admin-users-by-id/${user?.id}`);
-      console.log('response==>getAdminUsersByAdmin', response)
+      // console.log('response==>getAdminUsersByAdmin', response)
       if (response?.status) {
         // setUsersData(response.data.role);
         setRolePermissions(response.data?.staffRole?.permissions);
@@ -327,13 +329,22 @@ export default function UsersPage() {
     setLoading(true);
     try {
       // await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      const respons = await getData(`api/admin/delete-admin-user-by-admin/${deletingUser._id}`);
+      const respons = await getData(`api/admin/delete-admin-user-by-admin/${deletingUser?._id}`);
       if (respons.status === true) {
         showToast('deleted successfully', 'success');
         setIsDeleteDialogOpen(false);
         setDeletingUser(null);
         setLoading(false);
-        fetchAdminData()
+        if (user?.role === 'admin') {
+          fetchAdminData()
+        }
+        if (user?.role === 'distributor') {
+          fetchAllRetailers()
+        }
+        if (user?.role === 'retailer') {
+          fetchDistributorData()
+        }
+
       } else {
         showToast('Delete failed', 'error');
         setLoading(false);

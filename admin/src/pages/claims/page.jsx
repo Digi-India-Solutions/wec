@@ -75,52 +75,167 @@ export default function ClaimsPage() {
     }
   ];
 
+  // const columns = [
+  //   { key: 'claimId', title: 'Claim ID', sortable: true },
+  //   { key: 'customerName', title: 'Customer Name', sortable: true },
+  //   { key: 'productDetails', title: 'Product Details' },
+  //   { key: 'amcNumber', title: 'AMC No.', sortable: true },
+  //   { key: 'claimValue', title: 'Claim Value', render: (value) => `₹${value.toLocaleString()}` },
+  //   {
+  //     key: 'billPhoto', title: 'Bill Photo', render: (value) => {
+  //       if (!value) return '-';
+  //       const isImage = value.toLowerCase().includes('.jpg') || value.toLowerCase().includes('.png') || value.toLowerCase().includes('.jpeg');
+  //       return (
+  //         <div className="flex items-center space-x-2">
+  //           {isImage ? (
+  //             <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+  //               <i className="ri-image-line text-blue-600 w-4 h-4 flex items-center justify-center"></i>
+  //             </div>
+  //           ) : (
+  //             <div className="w-8 h-8 bg-red-100 rounded flex items-center justify-center">
+  //               <i className="ri-file-pdf-line text-red-600 w-4 h-4 flex items-center justify-center"></i>
+  //             </div>
+  //           )}
+  //           <Button
+  //             size="sm"
+  //             variant="ghost"
+  //             onClick={() => {
+  //               try {
+  //                 // 🧠 Force Cloudinary to download by adding `fl_attachment` to the URL
+  //                 let downloadUrl = editingAMC.productPicture;
+
+  //                 if (downloadUrl.includes("/upload/")) {
+  //                   downloadUrl = downloadUrl.replace("/upload/", "/upload/fl_attachment/");
+  //                 }
+
+  //                 // Create and trigger a temporary link
+  //                 const link = document.createElement("a");
+  //                 link.href = downloadUrl;
+  //                 link.download = editingAMC.purchaseProof.split("/").pop() || "purchase-proof";
+  //                 document.body.appendChild(link);
+  //                 link.click();
+  //                 document.body.removeChild(link);
+
+  //                 showToast("File downloaded successfully", "success");
+  //               } catch (error) {
+  //                 console.error("Error downloading image:", error);
+  //                 showToast("Failed to download file", "error");
+  //               }
+  //             }}
+  //             // onClick={() => showToast('File downloaded successfully', 'success')}
+  //             title="Download"
+  //           >
+  //             <i className="ri-download-line w-4 h-4 flex items-center justify-center"></i>
+  //           </Button>
+  //         </div>
+  //       );
+  //     }
+  //   },
+  //   { key: 'bankName', title: 'Bank Name' },
+  //   {
+  //     key: 'status', title: 'Status', render: (value) => (
+  //       <span className={`px-2 py-1 rounded-full text-xs font-medium ${value === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+  //         value === 'approved' ? 'bg-green-100 text-green-800' :
+  //           'bg-red-100 text-red-800'
+  //         }`}>
+  //         {value.charAt(0).toUpperCase() + value.slice(1)}
+  //       </span>
+  //     )
+  //   },
+  //   { key: 'createdAt', title: 'Created Date', sortable: true }
+  // ];
+
   const columns = [
-    { key: 'claimId', title: 'Claim ID', sortable: true },
-    { key: 'customerName', title: 'Customer Name', sortable: true },
-    { key: 'productDetails', title: 'Product Details' },
-    { key: 'amcNumber', title: 'AMC No.', sortable: true },
-    { key: 'claimValue', title: 'Claim Value', render: (value) => `₹${value.toLocaleString()}` },
-    {
-      key: 'billPhoto', title: 'Bill Photo', render: (value) => {
-        if (!value) return '-';
-        const isImage = value.toLowerCase().includes('.jpg') || value.toLowerCase().includes('.png') || value.toLowerCase().includes('.jpeg');
-        return (
-          <div className="flex items-center space-x-2">
-            {isImage ? (
-              <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
-                <i className="ri-image-line text-blue-600 w-4 h-4 flex items-center justify-center"></i>
-              </div>
-            ) : (
-              <div className="w-8 h-8 bg-red-100 rounded flex items-center justify-center">
-                <i className="ri-file-pdf-line text-red-600 w-4 h-4 flex items-center justify-center"></i>
-              </div>
-            )}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => showToast('File downloaded successfully', 'success')}
-              title="Download"
-            >
-              <i className="ri-download-line w-4 h-4 flex items-center justify-center"></i>
-            </Button>
+  { key: 'claimId', title: 'Claim ID', sortable: true },
+  { key: 'customerName', title: 'Customer Name', sortable: true },
+  { key: 'productDetails', title: 'Product Details' },
+  { key: 'amcNumber', title: 'AMC No.', sortable: true },
+  {
+    key: 'claimValue',
+    title: 'Claim Value',
+    render: (value) => (value ? `₹${Number(value).toLocaleString()}` : '-'),
+  },
+  {
+    key: 'billPhoto',
+    title: 'Bill Photo',
+    render: (value) => {
+      if (!value) return '-';
+      const fileName = value.split('/').pop();
+      const isImage = /\.(jpg|jpeg|png)$/i.test(value);
+
+      return (
+        <div className="flex items-center space-x-2">
+          <div
+            className={`w-8 h-8 rounded flex items-center justify-center ${
+              isImage ? 'bg-blue-100' : 'bg-red-100'
+            }`}
+          >
+            <i
+              className={`${
+                isImage ? 'ri-image-line text-blue-600' : 'ri-file-pdf-line text-red-600'
+              } w-4 h-4 flex items-center justify-center`}
+            ></i>
           </div>
-        );
-      }
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              try {
+                let downloadUrl = value;
+                // 🧠 Force Cloudinary file download by adding `fl_attachment`
+                if (downloadUrl.includes('/upload/')) {
+                  downloadUrl = downloadUrl.replace('/upload/', '/upload/fl_attachment/');
+                }
+
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = fileName || 'bill-photo';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                showToast('File downloaded successfully', 'success');
+              } catch (error) {
+                console.error('Error downloading file:', error);
+                showToast('Failed to download file', 'error');
+              }
+            }}
+            title="Download"
+          >
+            <i className="ri-download-line w-4 h-4 flex items-center justify-center"></i>
+          </Button>
+        </div>
+      );
     },
-    { key: 'bankName', title: 'Bank Name' },
-    {
-      key: 'status', title: 'Status', render: (value) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${value === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-          value === 'approved' ? 'bg-green-100 text-green-800' :
-            'bg-red-100 text-red-800'
-          }`}>
-          {value.charAt(0).toUpperCase() + value.slice(1)}
-        </span>
-      )
-    },
-    { key: 'createdAt', title: 'Created Date', sortable: true }
-  ];
+  },
+  { key: 'bankName', title: 'Bank Name' },
+  {
+    key: 'status',
+    title: 'Status',
+    render: (value) => (
+      <span
+        className={`px-2 py-1 rounded-full text-xs font-medium ${
+          value === 'pending'
+            ? 'bg-yellow-100 text-yellow-800'
+            : value === 'approved'
+            ? 'bg-green-100 text-green-800'
+            : 'bg-red-100 text-red-800'
+        }`}
+      >
+        {value ? value.charAt(0).toUpperCase() + value.slice(1) : 'Unknown'}
+      </span>
+    ),
+  },
+  {
+    key: 'createdAt',
+    title: 'Created Date',
+    sortable: true,
+    render: (value) =>
+      value ? new Date(value).toLocaleDateString('en-IN') : '-',
+  },
+];
+
 
   const handleAdd = () => {
     setEditingClaim(null);
@@ -240,14 +355,14 @@ export default function ClaimsPage() {
       >
         <i className="ri-delete-bin-line w-4 h-4 flex items-center justify-center text-red-600"></i>
       </Button>}
-      <Button
+      {/* <Button
         size="sm"
         variant="ghost"
         onClick={() => window.open('#', '_blank')}
         title="Download Bill"
       >
         <i className="ri-download-line w-4 h-4 flex items-center justify-center text-blue-600"></i>
-      </Button>
+      </Button> */}
     </div>
   );
   /////////////////////////////////////////////////////////////////////////////////////////////

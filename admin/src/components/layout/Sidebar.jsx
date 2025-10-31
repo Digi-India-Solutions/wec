@@ -222,7 +222,7 @@ export default function Sidebar({ activeKey, onMenuClick }) {
     { key: 'amcs', label: 'AMC Management', icon: 'ri-file-shield-line', path: '/amcs', module: 'AMC Management', roles: ['admin', 'distributor', 'retailer'] },
     { key: 'customers', label: 'Customers', icon: 'ri-user-heart-line', path: '/customers', module: 'Customers', roles: ['admin'] },
     { key: 'wallet', label: 'Wallet', icon: 'ri-wallet-line', path: '/wallet', module: 'Wallet Management', roles: ['admin', 'distributor', 'retailer'] },
-    { key: 'reports', label: 'Reports', icon: 'ri-bar-chart-line', path: '/reports', module: 'Reports', roles: ['admin', 'distributor'] },
+    // { key: 'reports', label: 'Reports', icon: 'ri-bar-chart-line', path: '/reports', module: 'Reports', roles: ['admin', 'distributor'] },
     { key: 'settings', label: 'Settings', icon: 'ri-settings-line', path: '/settings', module: 'Settings', roles: ['admin'] },
   ];
 
