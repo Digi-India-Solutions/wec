@@ -12,6 +12,7 @@ export default function DataTable({
   currentPage,
   totalPages,
   pageSize
+  
 }) {
   const [sortField, setSortField] = useState('');
   const [sortOrder, setSortOrder] = useState('asc');

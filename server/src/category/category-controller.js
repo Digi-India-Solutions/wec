@@ -21,28 +21,28 @@ exports.createCategoryByAdmin = catchAsyncErrors(async (req, res, next) => {
             
         });
 
-        // if (Array.isArray(typeNames) && typeNames.length > 0 && category?._id) {
-        //     const validTypeNames = typeNames.filter(
-        //         (t) => typeof t === "string" && t.trim() !== ""
-        //     );
-        //     // console.log("validTypeNames===>", validTypeNames)
-        //     if (validTypeNames.length > 0) {
-        //         await Promise.all(
-        //             validTypeNames.map(async (t) => {
-        //                 return Types.create({
-        //                     name: t.trim(),
-        //                     categoryIds: category._id,
-        //                     categoryId: category?.name,
-        //                     createdByEmail: {
-        //                         name: createdByEmail?.name || "Admin",
-        //                         email: createdByEmail?.email || "unknown@system.com",
-        //                     },
-        //                     status: req.body.status || "active",
-        //                 });
-        //             })
-        //         );
-        //     }
-        // }
+        if (Array.isArray(typeNames) && typeNames.length > 0 && category?._id) {
+            const validTypeNames = typeNames.filter(
+                (t) => typeof t === "string" && t.trim() !== ""
+            );
+            // console.log("validTypeNames===>", validTypeNames)
+            if (validTypeNames.length > 0) {
+                await Promise.all(
+                    validTypeNames.map(async (t) => {
+                        return Types.create({
+                            name: t.trim(),
+                            categoryIds: category._id,
+                            categoryId: category?.name,
+                            createdByEmail: {
+                                name: createdByEmail?.name || "Admin",
+                                email: createdByEmail?.email || "unknown@system.com",
+                            },
+                            status: req.body.status || "active",
+                        });
+                    })
+                );
+            }
+        }
 
         return res.status(201).json({
             status: true,
@@ -54,7 +54,6 @@ exports.createCategoryByAdmin = catchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler(error.message, 500));
     }
 });
-
 
 // ✅ Get Category (with pagination, search, status)
 exports.getCategoryByAdminWithPagination = catchAsyncErrors(async (req, res, next) => {
@@ -115,34 +114,156 @@ exports.getAllCategory = catchAsyncErrors(async (req, res, next) => {
     }
 })
 // ✅ Update Category
-exports.updateCategoryByAdmin = catchAsyncErrors(async (req, res, next) => {
-    try {
-        const { id } = req.params;
-        const updatedClaim = await Categorys.findByIdAndUpdate(id, req.body, {
-            new: true,
-            runValidators: true,
-        });
+// exports.updateCategoryByAdmin = catchAsyncErrors(async (req, res, next) => {
+//     try {
+//         const { id } = req.params;
+//         const updatedClaim = await Categorys.findByIdAndUpdate(id, req.body, {
+//             new: true,
+//             runValidators: true,
+//         });
 
-        if (!updatedClaim) {
-            return next(new ErrorHandler("Claim not found", 404));
-        }
-        res.status(200).json({ status: true, message: 'Claim updated successfully', data: updatedClaim });
-    } catch (error) {
-        return next(new ErrorHandler(error.message, 500));
+//         if (!updatedClaim) {
+//             return next(new ErrorHandler("Claim not found", 404));
+//         }
+//         res.status(200).json({ status: true, message: 'Claim updated successfully', data: updatedClaim });
+//     } catch (error) {
+//         return next(new ErrorHandler(error.message, 500));
+//     }
+// });
+
+exports.updateCategoryByAdmin = catchAsyncErrors(async (req, res, next) => {
+  try {
+    console.log("Incoming Category Update Payload:", req.body);
+
+    const { id } = req.params;
+    const { name, typeNames = [], createdByEmail = {}, status } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ status: false, message: "Category ID is required." });
     }
+
+    if (!name) {
+      return res.status(400).json({ status: false, message: "Category name is required." });
+    }
+
+    // 🔹 Find the existing category
+    const existingCategory = await Categorys.findById(id);
+    if (!existingCategory) {
+      return res.status(404).json({ status: false, message: "Category not found." });
+    }
+
+    // 🔹 Update category fields
+    const updatedCategory = await Categorys.findByIdAndUpdate(
+      id,
+      {
+        ...req.body,
+        updatedAt: Date.now(),
+      },
+      { new: true, runValidators: true }
+    );
+
+    // 🔹 Sync typeNames with Types collection
+    if (Array.isArray(typeNames) && updatedCategory?._id) {
+      const validTypeNames = typeNames
+        .filter((t) => typeof t === "string" && t.trim() !== "")
+        .map((t) => t.trim());
+
+      // Get existing types linked to this category
+      const existingTypes = await Types.find({ categoryIds: updatedCategory._id });
+      const existingTypeNames = existingTypes.map((t) => t.name);
+
+      // ➕ Add new types that don’t exist yet
+      const newTypeNames = validTypeNames.filter(
+        (t) => !existingTypeNames.includes(t)
+      );
+
+      if (newTypeNames.length > 0) {
+        await Promise.all(
+          newTypeNames.map(async (t) => {
+            return Types.create({
+              name: t,
+              categoryIds: updatedCategory._id,
+              categoryId: updatedCategory?.name,
+              createdByEmail: {
+                name: createdByEmail?.name || "Admin",
+                email: createdByEmail?.email || "unknown@system.com",
+              },
+              status: status || "active",
+            });
+          })
+        );
+      }
+
+      // ➖ Remove old types that are not in the updated list
+      const removedTypeNames = existingTypeNames.filter(
+        (t) => !validTypeNames.includes(t)
+      );
+
+      if (removedTypeNames.length > 0) {
+        await Types.deleteMany({
+          name: { $in: removedTypeNames },
+          categoryIds: updatedCategory._id,
+        });
+      }
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "Category updated successfully.",
+      data: updatedCategory,
+    });
+  } catch (error) {
+    console.error("Error in updateCategoryByAdmin:", error);
+    return next(new ErrorHandler(error.message, 500));
+  }
 });
 
-// ✅ Delete Category
-exports.deleteCategoryByAdmin = catchAsyncErrors(async (req, res, next) => {
-    try {
-        const { id } = req.params;
-        const deletedClaim = await Categorys.findByIdAndDelete(id);
 
-        if (!deletedClaim) {
-            return next(new ErrorHandler("Claim not found", 404));
-        }
-        res.status(200).json({ status: true, message: 'Claim deleted successfully', data: deletedClaim });
-    } catch (error) {
-        return next(new ErrorHandler(error.message, 500));
+// ✅ Delete Category
+// exports.deleteCategoryByAdmin = catchAsyncErrors(async (req, res, next) => {
+//     try {
+//         const { id } = req.params;
+//         const deletedClaim = await Categorys.findByIdAndDelete(id);
+
+//         if (!deletedClaim) {
+//             return next(new ErrorHandler("Claim not found", 404));
+//         }
+//         res.status(200).json({ status: true, message: 'Claim deleted successfully', data: deletedClaim });
+//     } catch (error) {
+//         return next(new ErrorHandler(error.message, 500));
+//     }
+// });
+
+exports.deleteCategoryByAdmin = catchAsyncErrors(async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({ status: false, message: "Category ID is required." });
     }
+
+    // 🔹 Find the category first
+    const category = await Categorys.findById(id);
+    if (!category) {
+      return next(new ErrorHandler("Category not found", 404));
+    }
+
+    // 🔹 Delete all types associated with this category
+    const deletedTypes = await Types.deleteMany({ categoryIds: id });
+
+    // 🔹 Delete the category itself
+    await Categorys.findByIdAndDelete(id);
+
+    return res.status(200).json({
+      status: true,
+      message: "Category and related types deleted successfully.",
+      data: {
+        deletedCategory: category,
+        deletedTypesCount: deletedTypes.deletedCount || 0,
+      },
+    });
+  } catch (error) {
+    console.error("Error in deleteCategoryByAdmin:", error);
+    return next(new ErrorHandler(error.message, 500));
+  }
 });

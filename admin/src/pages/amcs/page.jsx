@@ -183,7 +183,7 @@ export default function AMCsPage() {
 
       const category = allCategories.find(c => c._id === selectedCategory);
       const brand = allBrands.find(b => b._id === selectedBrand);
-      // const type = allTypes.find(t => t._id === selectedType);
+      const type = allTypes.find(t => t._id === selectedType);
       // const model = mockModels.find(m => m.id === selectedModel);
 
       const newAMC = {
@@ -191,10 +191,10 @@ export default function AMCsPage() {
         ...formData,
         productCategory: category?.name || '',
         productBrand: brand?.name || '',
-        // productType: type?.name || '',
+        productType: type?.name || '',
         categoryId: selectedCategory,
         brandId: selectedBrand,
-        // typeId: selectedType,
+        typeId: selectedType,
         productModel: selectedModel || '',
         purchaseValue: parseFloat(purchaseValue),
         amcPercentage: parseFloat(amcPercentage),
@@ -218,7 +218,7 @@ export default function AMCsPage() {
       formDataToSend.append("id", newAMC?.id || ""); formDataToSend.append("customerName", newAMC?.customerName || "");
       formDataToSend.append("customerAddress", newAMC?.customerAddress || ""); formDataToSend.append("customerMobile", newAMC?.customerMobile || ""); formDataToSend.append("customerEmail", newAMC?.customerEmail || ""); formDataToSend.append("createdByEmail", JSON.stringify(newAMC?.createdByEmail || {}));
       formDataToSend.append("productCategory", newAMC?.productCategory || ""); formDataToSend.append("productBrand", newAMC?.productBrand || "");
-      // formDataToSend.append("productType", newAMC?.productType || "");
+      formDataToSend.append("productType", newAMC?.productType || "");
       formDataToSend.append("productModel", newAMC?.productModel || ""); formDataToSend.append("serialNumber", newAMC?.serialNumber || "");
       formDataToSend.append("purchaseValue", newAMC?.purchaseValue || ""); formDataToSend.append("amcPercentage", newAMC?.amcPercentage || ""); formDataToSend.append("amcAmount", newAMC?.amcAmount || "");
       formDataToSend.append("startDate", newAMC?.startDate || ""); formDataToSend.append("endDate", newAMC?.endDate || ""); formDataToSend.append("status", newAMC?.status || "active"); formDataToSend.append("retailerId", newAMC?.retailerId || "");
@@ -612,7 +612,7 @@ export default function AMCsPage() {
   }
   const fetchAllTypesByBrand = async () => {
     try {
-      const response = await getData(`api/type/get-type-by-brand/${selectedBrand}`);
+      const response = await getData(`api/type/get-type-by-brand/${selectedCategory}`);
       console.log("response==>get-brand-by-category=>", response)
       if (response?.status === true) {
         setAllTypes(response?.data);
@@ -1028,7 +1028,7 @@ export default function AMCsPage() {
                   </div>
                 </div>
 
-                {/* <div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Type *</label>
                   <div className="relative">
                     <select
@@ -1046,7 +1046,7 @@ export default function AMCsPage() {
                       <i className="ri-arrow-down-s-line text-gray-400 w-4 h-4 flex items-center justify-center"></i>
                     </div>
                   </div>
-                </div> */}
+                </div>
 
 
                 <div>
@@ -1055,7 +1055,7 @@ export default function AMCsPage() {
                     <input
                       type="text"
                       name="productModel"
-                      disabled={!selectedBrand}
+                      disabled={!selectedType}
                       value={selectedModel}
                       onChange={(e) => setSelectedModel(e.target.value)}
                       placeholder="Enter model name"

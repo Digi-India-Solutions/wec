@@ -121,10 +121,10 @@ export default function ProductsPage() {
       case 'brands':
         return [
           { name: 'name', label: 'Brand Name', type: 'text', required: true },
-          {
-            name: 'categoryId', label: 'Category', type: 'select', required: true, options:
-              allCategories.filter(c => c.status === 'active').map(c => ({ value: c.name, label: c.name }))
-          },
+          // {
+          //   name: 'categoryId', label: 'Category', type: 'multiselect', required: true, options:
+          //     allCategories.filter(c => c.status === 'active').map(c => ({ value: c.name, label: c.name }))
+          // },
           {
             name: 'status', label: 'Status', type: 'select', required: true, options: [
               { value: 'active', label: 'Active' },
@@ -184,7 +184,12 @@ export default function ProductsPage() {
       case 'brands':
         return [
           ...baseColumns,
-          { key: 'categoryId', title: 'Category', sortable: true }
+          // { key: 'categoryId', title: 'Category', sortable: true }
+          {
+            key: 'categoryId', title: 'Category', sortable: true, render: (value) =>
+              Array.isArray(value) && value.length > 0 ? value.join(', ') : 'No Categories Assigned',
+          }
+
         ];
       // case 'types':
       //   return [

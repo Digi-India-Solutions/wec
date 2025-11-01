@@ -84,7 +84,7 @@ exports.getAllType = catchAsyncErrors(async (req, res, next) => {
 exports.getTypeByBrand = catchAsyncErrors(async (req, res, next) => {
     try{
         const { id } = req.params;
-        const types = await Types.find({ brandIds: id }).sort({ createdAt: -1 }).populate("categoryIds")
+        const types = await Types.find({ categoryIds: id }).sort({ createdAt: -1 }).populate("categoryIds")
         res.status(200).json({ status: true, message: 'types fetched successfully', data: types, });
     } catch (error) {
         return next(new ErrorHandler(error.message, 500));

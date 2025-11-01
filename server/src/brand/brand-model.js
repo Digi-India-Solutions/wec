@@ -7,12 +7,12 @@ const brandSchema = new Schema(
             name: { type: String, },
             email: { type: String, }
         },
-        categoryIds: {
+        categoryIds: [{
             type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true
-        },
-        categoryId: {
+        }],
+        categoryId: [{
             type: String
-        },
+        }],
         name: {
             type: String,
             required: true,
