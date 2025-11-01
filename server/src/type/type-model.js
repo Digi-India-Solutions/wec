@@ -7,12 +7,12 @@ const typeSchema = new Schema(
             name: { type: String, },
             email: { type: String, }
         },
-        brandIds: {
-            type: mongoose.Schema.Types.ObjectId, ref: 'Brand', required: true
-        },
-        brandId: {
-            type: String
-        },
+        // brandIds: {
+        //     type: mongoose.Schema.Types.ObjectId, ref: 'Brand', required: true
+        // },
+        // brandId: {
+        //     type: String
+        // },
         categoryIds: {
             type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true
         },

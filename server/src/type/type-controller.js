@@ -1,9 +1,9 @@
-const catchAsyncErrors = require("../../../middleware/catchAsyncErrors");
-const sendResponse = require("../../../middleware/response");
-const ErrorHandler = require("../../../utils/ErrorHandler");
+const catchAsyncErrors = require("../../middleware/catchAsyncErrors");
+const sendResponse = require("../../middleware/response");
+const ErrorHandler = require("../../utils/ErrorHandler");
 const Types = require("./type-model");
-const { deleteLocalFile } = require("../../../middleware/DeleteImageFromLoaclFolder");
-const { uploadImage, deleteImage } = require("../../../middleware/Uploads");
+const { deleteLocalFile } = require("../../middleware/DeleteImageFromLoaclFolder");
+const { uploadImage, deleteImage } = require("../../middleware/Uploads");
 
 
 // ✅ Create types

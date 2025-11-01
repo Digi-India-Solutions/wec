@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Warranty Extended Contract (WEC)</title>
+<style>
+  body {
+    font-family: "Poppins", Arial, sans-serif;
+    background: #f4f6f8;
+    margin: 0;
+    padding: 20px;
+  }
+  .invoice-box {
+    max-width: 850px;
+    margin: auto;
+    background: #fff;
+    padding: 25px 30px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 10px;
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo {
+    width: 70px;
+    height: 70px;
+    background: #007bff;
+    color: #fff;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .company-info h2 {
+    margin: 0;
+    color: #007bff;
+  }
+  .company-info p {
+    margin: 2px 0;
+    font-size: 13px;
+    color: #666;
+  }
+  .invoice-title {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 600;
+    color: #222;
+    margin: 25px 0 10px;
+  }
+  .meta-table, .details-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+  }
+  .meta-table td {
+    padding: 6px 8px;
+    font-size: 14px;
+  }
+  .meta-table tr:nth-child(even) { background: #f9fbfd; }
+  .meta-table td:first-child {
+    font-weight: 600;
+    color: #333;
+    width: 30%;
+  }
+  .details-table th, .details-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+    font-size: 14px;
+  }
+  .details-table th {
+    background: #007bff;
+    color: #fff;
+  }
+  .summary {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+  }
+  .summary table {
+    width: 300px;
+    border-collapse: collapse;
+  }
+  .summary td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+  }
+  .summary tr:last-child td {
+    font-weight: 600;
+    background: #f4faff;
+  }
+  .terms {
+    margin-top: 20px;
+    font-size: 13px;
+    color: #555;
+  }
+  .signature {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+    font-size: 14px;
+  }
+  .sig-line {
+    margin-top: 50px;
+    border-top: 1px solid #000;
+    width: 200px;
+  }
+  .footer {
+    text-align: center;
+    font-size: 12px;
+    color: #777;
+    margin-top: 30px;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+  }
+</style>
+</head>
+<body>
+  <div class="invoice-box">
+    <div class="header">
+      <div class="header-left">
+        <div class="logo">LOGO</div>
+        <div class="company-info">
+          <h2>{{company_name}}</h2>
+          <p>{{company_address}}</p>
+          <p>{{company_phone}} | {{company_email}}</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <table class="meta-table">
+          <tr>
+            <td><strong>WEC No:</strong></td>
+            <td>{{wec_number}}</td>
+          </tr>
+          <tr>
+            <td><strong>Date:</strong></td>
+            <td>{{date}}</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="invoice-title">Warranty Extended Contract (WEC)</div>
+
+    <table class="meta-table">
+      <tr>
+        <td>Customer Name</td>
+        <td>{{customer_name}}</td>
+      </tr>
+      <tr>
+        <td>Address</td>
+        <td>{{customer_address}}</td>
+      </tr>
+      <tr>
+        <td>Contact No.</td>
+        <td>{{customer_phone}}</td>
+      </tr>
+      <tr>
+        <td>Email</td>
+        <td>{{customer_email}}</td>
+      </tr>
+    </table>
+
+    <table class="details-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Product Name</th>
+          <th>Model</th>
+          <th>Serial No.</th>
+          <th>Original Warranty</th>
+          <th>Extended Till</th>
+          <th>Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td>{{product_name}}</td>
+          <td>{{product_model}}</td>
+          <td>{{product_serial}}</td>
+          <td>{{original_expiry}}</td>
+          <td>{{new_expiry}}</td>
+          <td>{{wec_amount}}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="summary">
+      <table>
+        <tr>
+          <td>Subtotal</td>
+          <td>{{subtotal}}</td>
+        </tr>
+        <tr>
+          <td>Tax ({{tax_percent}}%)</td>
+          <td>{{tax_amount}}</td>
+        </tr>
+        <tr>
+          <td>Total</td>
+          <td><strong>{{total_amount}}</strong></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="terms">
+      <strong>Terms & Conditions:</strong>
+      <ul>
+        <li>This WEC covers manufacturing defects only, as per company policy.</li>
+        <li>Warranty service to be availed through authorized service centers only.</li>
+        <li>Any damage due to misuse, accident, or unauthorized repair voids the contract.</li>
+        <li>Keep this document and invoice as proof of extended warranty.</li>
+      </ul>
+    </div>
+
+    <div class="signature">
+      <div>
+        <div class="sig-line"></div>
+        <div>Customer Signature</div>
+      </div>
+      <div>
+        <div class="sig-line"></div>
+        <div>Authorized Signatory</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Thank you for choosing {{company_name}}. For support, call {{support_phone}} or email {{support_email}}.
+    </div>
+  </div>
+</body>
+</html>

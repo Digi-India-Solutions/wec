@@ -24,7 +24,7 @@ export default function ProductsPage() {
   });
 
   const { showToast, ToastContainer } = useToast();
-  const [activeTab, setActiveTab] = useState('types' || 'brands' || 'categories');
+  const [activeTab, setActiveTab] = useState('categories' || 'brands' || 'types');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -172,6 +172,13 @@ export default function ProductsPage() {
       case 'categories':
         return [
           ...baseColumns,
+          {
+            key: 'typeNames', title: 'Types',
+            render: (value) =>
+              Array.isArray(value) && value.length > 0
+                ? value.join(', ')
+                : 'No Types Added',
+          },
           // { key: 'description', title: 'Description' }
         ];
       case 'brands':
@@ -179,12 +186,12 @@ export default function ProductsPage() {
           ...baseColumns,
           { key: 'categoryId', title: 'Category', sortable: true }
         ];
-      case 'types':
-        return [
-          ...baseColumns,
-          { key: 'brandId', title: 'Brand', sortable: true },
-          { key: 'categoryId', title: 'Category', sortable: true }
-        ];
+      // case 'types':
+      //   return [
+      //     ...baseColumns,
+      //     { key: 'brandId', title: 'Brand', sortable: true },
+      //     { key: 'categoryId', title: 'Category', sortable: true }
+      //   ];
 
       default:
         return baseColumns;
@@ -232,13 +239,13 @@ export default function ProductsPage() {
             setBrands(prev => [...prev, newItem]);
           }
           break;
-        case 'types':
-          if (editingItem) {
-            setTypes(prev => prev.map(t => t.id === editingItem.id ? newItem : t));
-          } else {
-            setTypes(prev => [...prev, newItem]);
-          }
-          break;
+        // case 'types':
+        //   if (editingItem) {
+        //     setTypes(prev => prev.map(t => t.id === editingItem.id ? newItem : t));
+        //   } else {
+        //     setTypes(prev => [...prev, newItem]);
+        //   }
+        //   break;
 
       }
 
@@ -259,9 +266,10 @@ export default function ProductsPage() {
         q = `api/category/delete-category-by-admin/${deletingItem?._id}`
       } else if (activeTab === 'brands') {
         q = `api/brand/delete-brand-by-admin/${deletingItem?._id}`
-      } else if (activeTab === 'types') {
-        q = `api/type/delete-type-by-admin/${deletingItem?._id}`
       }
+      // else if (activeTab === 'types') {
+      //   q = `api/type/delete-type-by-admin/${deletingItem?._id}`
+      // }
       const response = await getData(q);
       if (response?.status === true) {
         fetchCategoryData()
@@ -380,6 +388,10 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchCategoryData()
+  }, [])
+
+  useEffect(() => {
+    fetchCategoryData()
     fetchAllCategories();
 
     fetchBrandData()
@@ -422,7 +434,6 @@ export default function ProductsPage() {
       </div>
     );
   }
-  console.log("categories==>totalData", totalData)
   return (
     <div className="p-6 space-y-6">
       <ToastContainer />
@@ -438,7 +449,8 @@ export default function ProductsPage() {
       {/* Tabs */}
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
-          {(['categories', 'brands', 'types',
+          {(['categories', 'brands',
+            // 'types',
           ]).map((tab) => (
             <button
               key={tab}
@@ -503,7 +515,7 @@ export default function ProductsPage() {
         )}
 
         {/* Brand Filter for Types */}
-        {activeTab === 'types' && (<>
+        {/* {activeTab === 'types' && (<>
           <div className="w-full lg:w-48">
             <div className="relative">
               <select
@@ -521,7 +533,7 @@ export default function ProductsPage() {
               </div>
             </div>
           </div>
-          {/* <div className="w-full lg:w-48">
+          <div className="w-full lg:w-48">
             <div className="relative">
               <select
                 value={categoryFilter}
@@ -537,9 +549,9 @@ export default function ProductsPage() {
                 <i className="ri-arrow-down-s-line text-gray-400 w-4 h-4 flex items-center justify-center"></i>
               </div>
             </div>
-          </div> */}
+          </div>
         </>
-        )}
+        )} */}
       </div>
 
       {/* Data Table */}
@@ -567,7 +579,7 @@ export default function ProductsPage() {
         />
       )}
 
-      {activeTab === 'types' && (
+      {/* {activeTab === 'types' && (
         <DataTable
           data={types}
           columns={getColumns()}
@@ -577,7 +589,7 @@ export default function ProductsPage() {
           totalPages={Math.ceil(totalData.typeTotal / page.typeLimit)}
           pageSize={page.typeLimit}
         />
-      )}
+      )} */}
 
       {/* Add/Edit Modal */}
       <Modal

@@ -12,6 +12,10 @@ const categorySchema = new Schema(
             required: true,
             trim: true,
         },
+        typeNames: {
+            type: [String],
+            required: true,
+        },
         // description: {
         //     type: String,
         //     required: true,
